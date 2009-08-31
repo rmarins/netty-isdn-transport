@@ -27,7 +27,7 @@
   <groupId>org.neociclo.accord.components</groupId>
   <artifactId>accord-isdn-netty</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.0-M1-SNAPSHOT</version>
+  <version>1.0.0-M1</version>
   <name>accord-isdn-netty</name>
   <description>Accord ISDN JBoss Netty handler</description>
 
