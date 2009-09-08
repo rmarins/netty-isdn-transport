@@ -26,7 +26,7 @@ package org.neociclo.capi20.parameter;
 public enum B1Protocol {
 
     /**
-     * 64 kbit/s with HDLC framing, always set (defaul).
+     * 64 kbit/s with HDLC framing, always set (default).
      */
     HDLC_FRAMING_64KBITPS(0),
 
@@ -82,6 +82,10 @@ public enum B1Protocol {
     }
 
     public int getBitField() {
+        return bitField;
+    }
+
+    public int intValue() {
         return bitField;
     }
 

@@ -17,39 +17,16 @@
  *
  * $Id$
  */
-package org.neociclo.capi20;
+package org.neociclo.isdn.netty.channel;
 
-import static org.easymock.EasyMock.*;
-
-import org.neociclo.isdn.CapiFactory;
+import org.neociclo.capi20.SimpleCapi;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class MockCapiFactory implements CapiFactory {
+interface CapiIsdnChannel extends IsdnChannel {
 
-    private final Capi mock;
-
-    private final SimpleCapi simpleCapi;
-
-    public MockCapiFactory(boolean threadSafe) {
-        super();
-        this.mock = createMock(Capi.class);
-        this.simpleCapi = new SimpleCapi(mock);
-        makeThreadSafe(mock, threadSafe);
-    }
-
-    public Capi getCapi() {
-        return mock;
-    }
-
-    public SimpleCapi getSimpleCapi() {
-        return simpleCapi;
-    }
-
-    public void releaseExternalResources() {
-        // do nothing
-    }
+    SimpleCapi capi();
 
 }

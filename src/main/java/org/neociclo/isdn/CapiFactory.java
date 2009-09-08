@@ -17,39 +17,19 @@
  *
  * $Id$
  */
-package org.neociclo.capi20;
+package org.neociclo.isdn;
 
-import static org.easymock.EasyMock.*;
-
-import org.neociclo.isdn.CapiFactory;
+import org.jboss.netty.util.ExternalResourceReleasable;
+import org.neociclo.capi20.Capi;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class MockCapiFactory implements CapiFactory {
+public interface CapiFactory extends ExternalResourceReleasable {
 
-    private final Capi mock;
+    Capi getCapi();
 
-    private final SimpleCapi simpleCapi;
-
-    public MockCapiFactory(boolean threadSafe) {
-        super();
-        this.mock = createMock(Capi.class);
-        this.simpleCapi = new SimpleCapi(mock);
-        makeThreadSafe(mock, threadSafe);
-    }
-
-    public Capi getCapi() {
-        return mock;
-    }
-
-    public SimpleCapi getSimpleCapi() {
-        return simpleCapi;
-    }
-
-    public void releaseExternalResources() {
-        // do nothing
-    }
+    void releaseExternalResources();
 
 }

@@ -17,42 +17,39 @@
  *
  * $Id$
  */
-package org.neociclo.isdn.netty.channel;
+package org.neociclo.isdn;
 
-import java.net.InetSocketAddress;
+import net.sourceforge.jcapi.Jcapi;
 
 import org.neociclo.capi20.Capi;
-import org.neociclo.capi20.remote.RemoteCapi;
+import org.neociclo.capi20.jcapi.JcapiAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class RemoteCapiFactory implements CapiFactory {
+public class JCapiFactory implements CapiFactory {
 
-    private String host;
-    private int port;
-    private String user;
-    private String password;
+    private static final Logger LOGGER = LoggerFactory.getLogger(JCapiFactory.class);
 
-    public RemoteCapiFactory(String host, int port) {
-        this(host, port, null, null);
-    }
-
-    public RemoteCapiFactory(String host, int port, String user, String passwd) {
-        super();
-        this.host = host;
-        this.port = port;
-        this.user = user;
-        this.password = passwd;
-    }
+    private static Capi jCapiSingleton;
 
     public Capi getCapi() {
-        return new RemoteCapi(new InetSocketAddress(host, port), user, password);
+
+        if (jCapiSingleton == null) {
+            try {
+                jCapiSingleton = new JcapiAdapter(new Jcapi());
+            } catch (IllegalStateException ise) {
+                LOGGER.error("Cannot create the Capi instance. JCapi initialization failed.", ise);
+            }
+        }
+        return jCapiSingleton;
     }
 
     public void releaseExternalResources() {
-        // do nothing
+        // TODO Auto-generated method stub
     }
 
 }

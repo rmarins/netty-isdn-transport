@@ -48,7 +48,26 @@ public class IsdnClientHandlerFactory {
                 channel, handlerName);
 
         StateMachineProxyBuilder proxyBuilder = new StateMachineProxyBuilder();
-        proxyBuilder.setName("PhysicalLinkStateMachine");
+        proxyBuilder.setName("IsdnClientChannelStateMachine");
+        proxyBuilder.setStateContextLookup(stateContextLookup);
+        proxyBuilder.setEventArgumentsInterceptor(new NettyEventInterceptor());
+        // proxyBuilder.setEventFactory(new MyEventFactory());
+
+        IStateMachineChannelHandler engine = proxyBuilder.create(IStateMachineChannelHandler.class, sm);
+        return new ChannelAllCoverageWrapper(new DefaultStateMachineChannelHandler(engine));
+
+    }
+
+    public static ChannelHandler getIsdnServerStateMachineHandler(IsdnChannel channel, String handlerName) {
+
+        StateMachine sm = StateMachineFactory.getInstance(Transition.class).create(IsdnConnectionHandler.LISTEN_IDLE,
+                new IsdnConnectionHandler());
+
+        StateContextLookup stateContextLookup = new ChannelHandlerContextLookup(new DefaultStateContextFactory(),
+                channel, handlerName);
+
+        StateMachineProxyBuilder proxyBuilder = new StateMachineProxyBuilder();
+        proxyBuilder.setName("IsdnServerChannelStateMachine");
         proxyBuilder.setStateContextLookup(stateContextLookup);
         proxyBuilder.setEventArgumentsInterceptor(new NettyEventInterceptor());
         // proxyBuilder.setEventFactory(new MyEventFactory());

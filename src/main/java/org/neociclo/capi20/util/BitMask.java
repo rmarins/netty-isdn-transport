@@ -17,39 +17,52 @@
  *
  * $Id$
  */
-package org.neociclo.capi20;
+package org.neociclo.capi20.util;
 
-import static org.easymock.EasyMock.*;
+import static org.neociclo.capi20.util.Bits.*;
 
-import org.neociclo.isdn.CapiFactory;
+import java.util.ArrayList;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class MockCapiFactory implements CapiFactory {
+public class BitMask<T extends Enum<T>> {
 
-    private final Capi mock;
+    private int mask;
 
-    private final SimpleCapi simpleCapi;
+    private T[] values;
 
-    public MockCapiFactory(boolean threadSafe) {
+    public BitMask(T[] values) {
         super();
-        this.mock = createMock(Capi.class);
-        this.simpleCapi = new SimpleCapi(mock);
-        makeThreadSafe(mock, threadSafe);
+        this.values = values;
     }
 
-    public Capi getCapi() {
-        return mock;
+    public void setOption(IBitType t) {
+        this.mask = setBit(mask, t.getBitField());
     }
 
-    public SimpleCapi getSimpleCapi() {
-        return simpleCapi;
+    public boolean hasOption(IBitType t) {
+        return isBitSet(mask, t.getBitField());
     }
 
-    public void releaseExternalResources() {
-        // do nothing
+    public void unsetOption(IBitType t) {
+        this.mask = clearBit(mask, t.getBitField());
     }
 
+    @SuppressWarnings("unchecked")
+    public T[] getAllOptions() {
+        ArrayList<T> result = new ArrayList<T>();
+        for (T cap : values) {
+            if (hasOption((IBitType) cap)) {
+                result.add(cap);
+            }
+        }
+        return (T[]) result.toArray();
+    }
+
+    public int getBitMask() {
+        return mask;
+    }
+    
 }

@@ -34,12 +34,13 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.util.ThreadRenamingRunnable;
 import org.jboss.netty.util.internal.IoWorkerRunnable;
+import org.neociclo.isdn.IsdnSocketAddress;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-class IsdnPipelineSink extends AbstractChannelSink {
+class IsdnPipelineSink extends AbstractChannelSink implements IsdnChannelSink {
 
 //    private static final Logger LOGGER = LoggerFactory.getLogger(IsdnPipelineSink.class);
 
@@ -52,7 +53,7 @@ class IsdnPipelineSink extends AbstractChannelSink {
 
     public void eventSunk(ChannelPipeline pipeline, ChannelEvent e) throws Exception {
 
-        IsdnCapiChannel channel = (IsdnCapiChannel) e.getChannel();
+        IsdnClientChannel channel = (IsdnClientChannel) e.getChannel();
         ChannelFuture future = e.getFuture();
         if (e instanceof ChannelStateEvent) {
             ChannelStateEvent stateEvent = (ChannelStateEvent) e;
@@ -88,7 +89,7 @@ class IsdnPipelineSink extends AbstractChannelSink {
 
     }
 
-    void initialize(IsdnCapiChannel channel) {
+    public void initialize(IsdnClientChannel channel) {
         try {
             // query CAPI controllers
             IsdnWorker.initDevice(channel);
@@ -109,14 +110,14 @@ class IsdnPipelineSink extends AbstractChannelSink {
      * @param future
      * @param callingAddress
      */
-    private void bind(IsdnCapiChannel channel, ChannelFuture future, IsdnSocketAddress callingAddress) {
+    private void bind(IsdnClientChannel channel, ChannelFuture future, IsdnSocketAddress callingAddress) {
         channel.setCallingAddress(callingAddress);
         channel.bound = true;
         fireChannelBound(channel, callingAddress);
         future.setSuccess();
     }
 
-    private void connect(IsdnCapiChannel channel, ChannelFuture future, IsdnSocketAddress calledAddress) {
+    private void connect(IsdnClientChannel channel, ChannelFuture future, IsdnSocketAddress calledAddress) {
 
         boolean workerStarted = false;
 

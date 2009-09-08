@@ -19,21 +19,10 @@
  */
 package org.neociclo.isdn.netty.handler;
 
-import static org.neociclo.capi20.message.MessageType.CONNECT_B3_REQ;
-import static org.neociclo.capi20.message.MessageType.DISCONNECT_B3_REQ;
+import static org.neociclo.capi20.message.MessageType.*;
 import static org.neociclo.isdn.netty.handler.ParameterBuilder.additionalInfo;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.b3Protocol;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.bProtocol;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.bearerCapability;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.calledPartyNumber;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.calledPartySubAddress;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.callingPartNumber;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.callingPartySubAddress;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.controller;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.createNcpi;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.hasSubAddress;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.highLayerCompatibility;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.lowLayerCompatibility;
+import static org.neociclo.isdn.netty.handler.ParameterBuilder.*;
+import net.sourceforge.jcapi.message.parameter.BProtocol;
 import net.sourceforge.jcapi.message.parameter.NCPI;
 
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -44,7 +33,9 @@ import org.neociclo.capi20.message.ConnectActiveResp;
 import org.neociclo.capi20.message.ConnectB3ActiveInd;
 import org.neociclo.capi20.message.ConnectB3ActiveResp;
 import org.neociclo.capi20.message.ConnectB3Req;
+import org.neociclo.capi20.message.ConnectInd;
 import org.neociclo.capi20.message.ConnectReq;
+import org.neociclo.capi20.message.ConnectResp;
 import org.neociclo.capi20.message.DataB3Ind;
 import org.neociclo.capi20.message.DataB3Req;
 import org.neociclo.capi20.message.DataB3Resp;
@@ -54,6 +45,8 @@ import org.neociclo.capi20.message.DisconnectB3Resp;
 import org.neociclo.capi20.message.DisconnectInd;
 import org.neociclo.capi20.message.DisconnectReq;
 import org.neociclo.capi20.message.DisconnectResp;
+import org.neociclo.capi20.message.ListenReq;
+import org.neociclo.capi20.parameter.Reject;
 import org.neociclo.isdn.netty.channel.IsdnChannel;
 import org.neociclo.isdn.netty.channel.IsdnChannelConfig;
 
@@ -191,6 +184,41 @@ class IsdnConnectionHelper {
         activeResp.setPlci(activeInd.getPlci());
 
         return activeResp;
+    }
+
+    public static ConnectResp replyConnectResp(ConnectInd ind, Reject response, IsdnChannel channel) throws CapiException {
+
+        IsdnChannelConfig config = channel.getConfig();
+
+        // TODO check CONNECT_IND properly and perform handshake of connection
+        // parameters against the channel configuration
+
+        ConnectResp resp = new ConnectResp();
+        resp.setAppID(ind.getAppID());
+        resp.setMessageID(ind.getMessageID());
+
+        resp.setPlci(ind.getPlci());
+        resp.setResponse(response);
+
+        BProtocol bp = new BProtocol();
+        bp.setB1Protocol(b1Protocol(config.getB1()));
+        bp.setB2Protocol(b2Protocol(config.getB2()));
+        bp.setB3Protocol(b3Protocol(config.getB3()));
+        bp.setB3Configuration(config.getB3Config());
+        resp.setBProtocol(bp);
+
+        resp.setConnectedPartyNumber(null);
+        resp.setConnectedPartySubAddress(null);
+
+        resp.setLowLayerCompatibility(config.getLowLayerCompatibility());
+        resp.setAdditionalInfo(ind.getAdditionalInfo());
+
+        return resp;
+    }
+
+    public static ListenReq createListenReq(IsdnChannel channel) {
+        // TODO do implementation
+        return null;
     }
 
 }

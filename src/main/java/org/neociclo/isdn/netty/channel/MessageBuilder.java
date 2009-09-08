@@ -28,7 +28,9 @@ import org.neociclo.capi20.message.CapiMessage;
 import org.neociclo.capi20.message.ConnectActiveInd;
 import org.neociclo.capi20.message.ConnectB3ActiveInd;
 import org.neociclo.capi20.message.ConnectB3Conf;
+import org.neociclo.capi20.message.ConnectB3Ind;
 import org.neociclo.capi20.message.ConnectConf;
+import org.neociclo.capi20.message.ConnectInd;
 import org.neociclo.capi20.message.DataB3Conf;
 import org.neociclo.capi20.message.DataB3Ind;
 import org.neociclo.capi20.message.DisconnectB3Conf;
@@ -36,6 +38,7 @@ import org.neociclo.capi20.message.DisconnectB3Ind;
 import org.neociclo.capi20.message.DisconnectConf;
 import org.neociclo.capi20.message.DisconnectInd;
 import org.neociclo.capi20.message.InfoConf;
+import org.neociclo.capi20.message.ListenConf;
 import org.neociclo.capi20.message.MessageType;
 import org.neociclo.capi20.parameter.Info;
 
@@ -68,6 +71,8 @@ public class MessageBuilder {
             return new InfoConf(buffer);
         case CONNECT_CONF:
             return new ConnectConf(buffer);
+        case CONNECT_IND:
+            return new ConnectInd(buffer);
         case DISCONNECT_IND:
             return new DisconnectInd(buffer);
         case DISCONNECT_CONF:
@@ -76,12 +81,16 @@ public class MessageBuilder {
             return new ConnectActiveInd(buffer);
         case CONNECT_B3_CONF:
             return new ConnectB3Conf(buffer);
+        case CONNECT_B3_IND:
+            return new ConnectB3Ind(buffer, config.getB3());
         case CONNECT_B3_ACTIVE_IND:
             return new ConnectB3ActiveInd(buffer, config.getB3());
         case DISCONNECT_B3_CONF:
             return new DisconnectB3Conf(buffer);
         case DISCONNECT_B3_IND:
             return new DisconnectB3Ind(buffer, config.getB3());
+        case LISTEN_CONF:
+            return new ListenConf(buffer);
         }
 
         throw new CapiException(Info.EXCHANGE_ILLEGAL_COMMAND, format(

@@ -49,10 +49,10 @@ import org.neociclo.capi20.parameter.NumberType;
 import org.neociclo.capi20.parameter.NumberingPlan;
 import org.neociclo.capi20.parameter.PresentationIndicator;
 import org.neociclo.capi20.parameter.SubAddressType;
-import org.neociclo.isdn.netty.channel.IsdnAddress;
+import org.neociclo.isdn.IsdnAddress;
+import org.neociclo.isdn.IsdnSocketAddress;
 import org.neociclo.isdn.netty.channel.IsdnChannel;
 import org.neociclo.isdn.netty.channel.IsdnChannelConfig;
-import org.neociclo.isdn.netty.channel.IsdnSocketAddress;
 
 /**
  * @author Rafael Marins
@@ -280,7 +280,7 @@ class ParameterBuilder {
     }
 
     public static int cipValue(CompatibilityInformationProfile cip) {
-        return (cip == null ? NO_PREDEFINED_PROFILE.getValue() : cip.getValue());
+        return (cip == null ? NO_PREDEFINED_PROFILE.getBitField() : cip.getBitField());
     }
 
     public static Controller controller(int number) {

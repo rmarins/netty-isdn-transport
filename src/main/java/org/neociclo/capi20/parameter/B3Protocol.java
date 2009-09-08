@@ -70,6 +70,10 @@ public enum B3Protocol {
         return bitField;
     }
 
+    public int intValue() {
+        return bitField;
+    }
+
     @Override
     public String toString() {
         String s = String.format("%s(%s)", name(), getBitField());

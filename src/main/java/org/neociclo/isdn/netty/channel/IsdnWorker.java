@@ -51,7 +51,7 @@ class IsdnWorker implements Runnable {
     /** 1 Kilobyte (1024 bytes). */
     private static final int KB = 1024;
 
-    public static void initDevice(IsdnCapiChannel channel) throws CapiException {
+    public static void initDevice(IsdnClientChannel channel) throws CapiException {
 
         // check if already initialized
         if (channel.initialized) {
@@ -76,7 +76,7 @@ class IsdnWorker implements Runnable {
 
     }
 
-    public static int register(IsdnCapiChannel channel) throws CapiException {
+    public static int register(IsdnClientChannel channel) throws CapiException {
 
         LOGGER.trace("register()");
 
@@ -103,7 +103,7 @@ class IsdnWorker implements Runnable {
 
     }
 
-    public static void write(IsdnCapiChannel channel, ChannelFuture future, Object message) {
+    public static void write(IsdnClientChannel channel, ChannelFuture future, Object message) {
 
         if (message == ChannelBuffers.EMPTY_BUFFER) {
             // set flush() signal complete
@@ -148,20 +148,20 @@ class IsdnWorker implements Runnable {
 
     }
 
-    private static void setMessageAppIdAndNumber(IsdnCapiChannel channel, CapiMessage a) {
+    private static void setMessageAppIdAndNumber(IsdnClientChannel channel, CapiMessage a) {
         BaseMessage b = (BaseMessage) a;
 
         b.setAppID(channel.worker.appID);
 
-        // set message number for message REQ and IND only
+        // set message number for message REQ only
         int subCommand = (a.getType().getSubCommand() & 0xff);
-        if (subCommand == 0x80 || subCommand == 0x82) {
+        if (subCommand == 0x80) {
             b.setMessageID(channel.worker.messageCounter.getAndIncrement());
         }
 
     }
 
-    public static void setInterestOps(IsdnCapiChannel channel, ChannelFuture future, int interestOps) {
+    public static void setInterestOps(IsdnClientChannel channel, ChannelFuture future, int interestOps) {
 
         LOGGER.trace("setInterestOps() :: interestOps = {}", interestOps);
 
@@ -202,7 +202,7 @@ class IsdnWorker implements Runnable {
 
     }
 
-    public static void close(IsdnCapiChannel channel, ChannelFuture future) {
+    public static void close(IsdnClientChannel channel, ChannelFuture future) {
 
         LOGGER.trace("close()");
 
@@ -237,7 +237,7 @@ class IsdnWorker implements Runnable {
 
     }
 
-    private static Controller getProfile(IsdnCapiChannel channel, final int controller) throws CapiException {
+    private static Controller getProfile(IsdnClientChannel channel, final int controller) throws CapiException {
 
         final Profile profile = channel.capi.simpleGetProfile(controller);
 
@@ -266,7 +266,7 @@ class IsdnWorker implements Runnable {
 
     }
 
-    private final IsdnCapiChannel channel;
+    private final IsdnClientChannel channel;
     private final int appID;
     private final AtomicInteger messageCounter;
 
@@ -274,7 +274,7 @@ class IsdnWorker implements Runnable {
 
     private volatile ChannelFuture connectFuture;
 
-    public IsdnWorker(IsdnCapiChannel channel, int port, ChannelFuture connectFuture) {
+    public IsdnWorker(IsdnClientChannel channel, int port, ChannelFuture connectFuture) {
         super();
 
         if (port <= 0) {

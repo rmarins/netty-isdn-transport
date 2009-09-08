@@ -19,10 +19,10 @@
  */
 package org.neociclo.capi20.message;
 
-import static org.neociclo.capi20.message.MessageType.INFO_CONF;
-import static org.neociclo.capi20.parameter.ParameterBuffers.readInfo;
-import static org.neociclo.capi20.parameter.ParameterBuffers.readPlci;
-import net.sourceforge.jcapi.message.parameter.PLCI;
+import static org.neociclo.capi20.message.MessageType.*;
+import static org.neociclo.capi20.parameter.ParameterBuffers.*;
+
+import net.sourceforge.jcapi.message.parameter.Controller;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.neociclo.capi20.parameter.Info;
@@ -31,25 +31,25 @@ import org.neociclo.capi20.parameter.Info;
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class InfoConf extends ReceiveMessage {
+public class ListenConf extends ReceiveMessage {
 
-    private PLCI plci;
+    private Controller controller;
     private Info info;
 
-    public InfoConf(ChannelBuffer buffer) {
-        super(INFO_CONF, buffer);
+    public ListenConf(ChannelBuffer buffer) {
+        super(LISTEN_CONF, buffer);
     }
 
-    public PLCI getPlci() {
-        return plci;
-    }
-
-    protected void setPlci(PLCI plci) {
-        this.plci = plci;
+    public Controller getController() {
+        return controller;
     }
 
     public Info getInfo() {
         return info;
+    }
+
+    protected void setController(Controller controller) {
+        this.controller = controller;
     }
 
     protected void setInfo(Info info) {
@@ -62,7 +62,7 @@ public class InfoConf extends ReceiveMessage {
 
     @Override
     protected void setValues(ChannelBuffer buf) {
-        setPlci(readPlci(buf));
+        setController(readController(buf));
         setInfo(readInfo(buf));
     }
 

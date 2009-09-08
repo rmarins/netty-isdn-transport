@@ -17,19 +17,42 @@
  *
  * $Id$
  */
-package org.neociclo.isdn.netty.channel;
+package org.neociclo.isdn;
 
-import org.jboss.netty.util.ExternalResourceReleasable;
+import java.net.InetSocketAddress;
+
 import org.neociclo.capi20.Capi;
+import org.neociclo.capi20.remote.RemoteCapi;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public interface CapiFactory extends ExternalResourceReleasable {
+public class RemoteCapiFactory implements CapiFactory {
 
-    Capi getCapi();
+    private String host;
+    private int port;
+    private String user;
+    private String password;
 
-    void releaseExternalResources();
+    public RemoteCapiFactory(String host, int port) {
+        this(host, port, null, null);
+    }
+
+    public RemoteCapiFactory(String host, int port, String user, String passwd) {
+        super();
+        this.host = host;
+        this.port = port;
+        this.user = user;
+        this.password = passwd;
+    }
+
+    public Capi getCapi() {
+        return new RemoteCapi(new InetSocketAddress(host, port), user, password);
+    }
+
+    public void releaseExternalResources() {
+        // do nothing
+    }
 
 }

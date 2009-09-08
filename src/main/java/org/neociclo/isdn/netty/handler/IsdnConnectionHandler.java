@@ -46,7 +46,6 @@ import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.DownstreamMessageEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.neociclo.capi20.CapiException;
 import org.neociclo.capi20.message.CapiMessage;
@@ -68,8 +67,6 @@ import org.neociclo.netty.statemachine.SimpleStateMachineHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
-
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
@@ -81,9 +78,22 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     public static final String ISDN_CONNECTED_EVENT_ATTR = "Isdn.channelConnectedEvent";
     public static final String ISDN_CLOSE_REQUESTED_EVENT_ATTR = "Isdn.closeRequestedEvent";
 
+    @State
+    public static final String LISTEN = "LISTEN";
+    @State(LISTEN)
+    public static final String LISTEN_IDLE = "L-0";
+    @State(LISTEN)
+    public static final String WF_LISTEN_CONF = "L-0.1 [WF_LISTEN_CONF]";
+    @State(LISTEN)
+    public static final String LISTEN_ACTIVE = "L-1";
+    @State(LISTEN)
+    public static final String WF_LISTEN_CONF_SUPERSEDED = "L-1.1 [WF_LISTEN_CONF_SUPERSEDED]";
+
+    
     /** General state of the protocol handler; the state it is initialized. */
     @State
     public static final String PLCI = "GENERAL";
+
     @State(PLCI)
     public static final String PLCI_IDLE = "P-0";
     @State(PLCI)
@@ -91,11 +101,11 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     @State(PLCI)
     public static final String WF_CONNECT_ACTIVE_IND = "P-1.1";
     @State(PLCI)
-    public static final String PLCI_ACTIVE = "P-ACT";
-    @State(PLCI)
     public static final String WF_DISCONNECT_CONF = "P-5 [WF_DISCONNECT_CONF]";
     @State(PLCI)
     public static final String DO_CONNECT_B3_REQ = "P-1.2 [DO_CONNECT_B3_REQ]";
+    @State(PLCI)
+    public static final String PLCI_ACTIVE = "P-ACT";
 
     @State(PLCI_ACTIVE)
     public static final String NCCI_IDLE = "N-0";
@@ -113,7 +123,21 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     }
 
     // -------------------------------------------------------------------------
-    // Physical Link control
+    // Physical Link control :: Listen State Machine
+    // -------------------------------------------------------------------------
+
+    @Transition(on = CHANNEL_CONNECTED, in = LISTEN_IDLE, next = WF_LISTEN_CONF)
+    public void plciListenReq(IsdnChannel channel, StateContext stateCtx, ChannelStateEvent e) throws CapiException {
+
+        LOGGER.trace("plciListenReq()");
+
+        CapiMessage listenReq = createListenReq(channel);
+        channel.write(listenReq);
+
+    }
+
+    // -------------------------------------------------------------------------
+    // Physical Link control :: 
     // -------------------------------------------------------------------------
 
     @Transition(on = CHANNEL_CONNECTED, in = PLCI_IDLE, next = WF_CONNECT_CONF)

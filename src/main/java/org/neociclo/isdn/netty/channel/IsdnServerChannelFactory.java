@@ -21,8 +21,9 @@ package org.neociclo.isdn.netty.channel;
 
 import java.util.concurrent.Executor;
 
-import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ServerChannel;
+import org.jboss.netty.channel.ServerChannelFactory;
 import org.jboss.netty.util.internal.ExecutorUtil;
 import org.neociclo.capi20.Capi;
 import org.neociclo.isdn.CapiFactory;
@@ -31,41 +32,36 @@ import org.neociclo.isdn.CapiFactory;
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class IsdnClientChannelFactory implements ChannelFactory {
-
-    private final CapiFactory capiFactory;
-    private final IsdnPipelineSink sink;
-
-    private ControllerSelector controllerSelector;
-    private IsdnConfigurator configurator;
+public class IsdnServerChannelFactory implements ServerChannelFactory {
 
     private Executor workerExecutor;
+    private IsdnServerPipelineSink sink;
+    private CapiFactory capiFactory;
+    private IsdnConfigurator configurator;
+    private ControllerSelector controllerSelector;
 
     /**
      * Creates a new instance.
      */
-    public IsdnClientChannelFactory(Executor workerExecutor, CapiFactory capiFactory) {
+    public IsdnServerChannelFactory(Executor workerExecutor, CapiFactory capiFactory) {
         this(workerExecutor, capiFactory, null);
     }
 
     /**
      * Creates a new instance.
      */
-    public IsdnClientChannelFactory(Executor workerExecutor, CapiFactory capiFactory, IsdnConfigurator configurator) {
+    public IsdnServerChannelFactory(Executor workerExecutor, CapiFactory capiFactory, IsdnConfigurator configurator) {
         this(workerExecutor, capiFactory, configurator, null);
     }
 
     /**
      * Creates a new instance.
      */
-    public IsdnClientChannelFactory(Executor workerExecutor, CapiFactory capiFactory, IsdnConfigurator configurator,
+    public IsdnServerChannelFactory(Executor workerExecutor, CapiFactory capiFactory, IsdnConfigurator configurator,
             ControllerSelector controllerSelector) {
-
-        super();
-
         this.workerExecutor = workerExecutor;
         this.capiFactory = capiFactory;
-        this.sink = new IsdnPipelineSink(workerExecutor);
+        this.sink = new IsdnServerPipelineSink(workerExecutor);
         this.configurator = configurator;
 
         if (controllerSelector == null) {
@@ -75,19 +71,15 @@ public class IsdnClientChannelFactory implements ChannelFactory {
         }
     }
 
-    public IsdnClientChannel newChannel(ChannelPipeline pipeline) {
+    public ServerChannel newChannel(ChannelPipeline pipeline) {
         Capi capi = capiFactory.getCapi();
-        IsdnClientChannel channel = new IsdnClientChannel(capi, this, pipeline, sink, controllerSelector, configurator);
-        return channel;
+        return new IsdnServerChannel(this, pipeline, sink, capi, controllerSelector, configurator);
+//        return new IsdnCapiChannel(capi, false, this, pipeline, sink, controllerSelector, configurator);
     }
 
     public void releaseExternalResources() {
         ExecutorUtil.terminate(workerExecutor);
         capiFactory.releaseExternalResources();
-    }
-
-    public Executor executor() {
-        return workerExecutor;
     }
 
 }

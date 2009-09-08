@@ -21,6 +21,7 @@ package org.neociclo.isdn.netty.channel;
 
 import org.jboss.netty.channel.Channel;
 import org.neociclo.capi20.Controller;
+import org.neociclo.isdn.IsdnSocketAddress;
 
 /**
  * @author Rafael Marins

@@ -17,43 +17,14 @@
  *
  * $Id$
  */
-package org.neociclo.isdn.netty.channel;
-
-import java.net.SocketAddress;
+package org.neociclo.capi20.util;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class IsdnSocketAddress extends SocketAddress {
+public interface IBitType {
 
-    private static final long serialVersionUID = -838183852292629142L;
+    int getBitField();
 
-    private IsdnAddress address;
-    
-    public IsdnSocketAddress(String isdnNumber) {
-        this(isdnNumber, null);
-    }
-
-    public IsdnSocketAddress(String isdnNumber, String isdnSubAddress) {
-        super();
-        this.address = new IsdnAddress(isdnNumber, isdnSubAddress);
-    }
-
-    public IsdnAddress getAddress() {
-        return address;
-    }
-
-    public String getNumber() {
-        return address.getNumber();
-    }
-
-    public String getSubAddress() {
-        return address.getSubAddress();
-    }
-
-    @Override
-    public String toString() {
-        return getNumber() + (getSubAddress() == null ? "" : ':' + getSubAddress());
-    }
 }

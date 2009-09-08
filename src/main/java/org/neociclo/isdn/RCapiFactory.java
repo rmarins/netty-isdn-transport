@@ -17,7 +17,7 @@
  *
  * $Id$
  */
-package org.neociclo.isdn.netty.channel;
+package org.neociclo.isdn;
 
 import java.io.File;
 import java.io.FileOutputStream;

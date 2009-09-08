@@ -20,15 +20,16 @@
 package org.neociclo.isdn.netty.channel;
 
 import static org.jboss.netty.channel.Channels.*;
-
 import java.net.SocketAddress;
 import java.util.ArrayList;
 
 import org.jboss.netty.channel.AbstractChannel;
+import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.neociclo.capi20.Capi;
 import org.neociclo.capi20.Controller;
 import org.neociclo.capi20.SimpleCapi;
+import org.neociclo.isdn.IsdnSocketAddress;
 import org.neociclo.isdn.netty.handler.IsdnClientHandlerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,16 +38,15 @@ import org.slf4j.LoggerFactory;
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-final class IsdnCapiChannel extends AbstractChannel implements IsdnChannel {
+final class IsdnClientChannel extends AbstractChannel implements IsdnChannel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IsdnCapiChannel.class);
+    private Logger LOGGER = LoggerFactory.getLogger(IsdnClientChannel.class);
 
     private volatile IsdnSocketAddress callingAddress;
     private volatile IsdnSocketAddress calledAddress;
 
     private final IsdnChannelConfig config;
     private final ControllerSelector controllerSelector;
-    private final boolean initiator;
 
     volatile Thread workerThread;
     IsdnWorker worker;
@@ -60,8 +60,8 @@ final class IsdnCapiChannel extends AbstractChannel implements IsdnChannel {
 
     private Controller controller;
 
-    IsdnCapiChannel(Capi capi, boolean initiator, IsdnClientChannelFactory factory, ChannelPipeline pipeline,
-            IsdnPipelineSink sink, ControllerSelector controllerSelector, IsdnConfigurator configurator) {
+    IsdnClientChannel(Capi capi, ChannelFactory factory, ChannelPipeline pipeline, IsdnChannelSink sink,
+            ControllerSelector controllerSelector, IsdnConfigurator configurator) {
 
         super(null, factory, pipeline, sink);
 
@@ -73,7 +73,6 @@ final class IsdnCapiChannel extends AbstractChannel implements IsdnChannel {
 
         this.capi = new SimpleCapi(capi);
         this.config = new IsdnChannelConfig();
-        this.initiator = initiator;
         this.controllerSelector = controllerSelector;
 
         getPipeline().addFirst("plciHandler", IsdnClientHandlerFactory.getPhysicalLinkHandler(this, "plciHandler"));
@@ -127,10 +126,6 @@ final class IsdnCapiChannel extends AbstractChannel implements IsdnChannel {
 
     public SocketAddress getRemoteAddress() {
         return getCalledAddress();
-    }
-
-    public boolean isInitiator() {
-        return initiator;
     }
 
     void setCallingAddress(IsdnSocketAddress callingAddress) {

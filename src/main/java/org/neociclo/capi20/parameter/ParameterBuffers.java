@@ -36,8 +36,12 @@ import net.sourceforge.jcapi.message.parameter.LowLayerCompatibility;
 import net.sourceforge.jcapi.message.parameter.NCCI;
 import net.sourceforge.jcapi.message.parameter.NCPI;
 import net.sourceforge.jcapi.message.parameter.PLCI;
+import net.sourceforge.jcapi.message.parameter.sub.BChannelInformation;
+import net.sourceforge.jcapi.message.parameter.sub.KeypadFacility;
+import net.sourceforge.jcapi.message.parameter.sub.User2UserData;
 
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.neociclo.capi20.message.MessageType;
 
 /**
@@ -46,12 +50,34 @@ import org.neociclo.capi20.message.MessageType;
  */
 public class ParameterBuffers {
 
+    public static void writeReject(ChannelBuffer buf, Reject rej) {
+        writeWord(buf, (rej == null ? 0x00 : rej.intValue()));
+    }
+
     public static ConnectedSubAddress readConnectedSubAddress(ChannelBuffer buf) {
         byte[] elements = readStruct(buf);
         if (elements == null) {
             return null;
         }
         return new ConnectedSubAddress(elements);
+    }
+
+    public static void writeConnectedSubAddress(ChannelBuffer buf, ConnectedSubAddress subAddress) {
+        if (subAddress == null) {
+            writeOctet(buf, EMPTY_STRUCT);
+            return;
+        }
+        byte[] elements = subAddress.getBytes();
+        writeStruct(buf, elements);
+    }
+
+    public static void writeConnectedNumber(ChannelBuffer buf, ConnectedNumber number) {
+        if (number == null) {
+            writeOctet(buf, EMPTY_STRUCT);
+            return;
+        }
+        byte[] elements = number.getBytes();
+        writeStruct(buf, elements);
     }
 
     public static ConnectedNumber readConnectedNumber(ChannelBuffer buf) {
@@ -113,7 +139,7 @@ public class ParameterBuffers {
 
     public static void writePlci(ChannelBuffer buf, PLCI plci) {
         if (plci == null) {
-            writeDword(buf, 0);
+            writeDword(buf, EMPTY_STRUCT);
             return;
         }
 
@@ -137,6 +163,14 @@ public class ParameterBuffers {
         writeStruct(buf, elements);
     }
 
+    public static CalledPartyNumber readCalledPartyNumber(ChannelBuffer buf) {
+        byte[] elements = readStruct(buf);
+        if (elements == null) {
+            return null;
+        }
+        return new CalledPartyNumber(elements);
+    }
+
     public static void writeCallingPartyNumber(ChannelBuffer buf, CallingPartyNumber number) {
         if (number == null) {
             writeOctet(buf, EMPTY_STRUCT);
@@ -144,6 +178,14 @@ public class ParameterBuffers {
         }
         byte[] elements = number.getBytes();
         writeStruct(buf, elements);
+    }
+
+    public static CallingPartyNumber readCallingPartyNumber(ChannelBuffer buf) {
+        byte[] elements = readStruct(buf);
+        if (elements == null) {
+            return null;
+        }
+        return new CallingPartyNumber(elements);
     }
 
     public static void writeCalledPartySubAddress(ChannelBuffer buf, CalledPartySubAddress subAddress) {
@@ -155,6 +197,14 @@ public class ParameterBuffers {
         writeStruct(buf, elements);
     }
 
+    public static CalledPartySubAddress readCalledPartySubAddress(ChannelBuffer buf) {
+        byte[] elements = readStruct(buf);
+        if (elements == null) {
+            return null;
+        }
+        return new CalledPartySubAddress(elements);
+    }
+
     public static void writeCallingPartySubAddress(ChannelBuffer buf, CallingPartySubAddress subAddress) {
         if (subAddress == null) {
             writeOctet(buf, EMPTY_STRUCT);
@@ -164,6 +214,14 @@ public class ParameterBuffers {
         writeStruct(buf, elements);
     }
 
+    public static CallingPartySubAddress readCallingPartySubAddress(ChannelBuffer buf) {
+        byte[] elements = readStruct(buf);
+        if (elements == null) {
+            return null;
+        }
+        return new CallingPartySubAddress(elements);
+    }
+
     public static void writeAdditionalInfo(ChannelBuffer buf, AdditionalInfo info) {
         if (info == null) {
             writeOctet(buf, EMPTY_STRUCT);
@@ -171,6 +229,41 @@ public class ParameterBuffers {
         }
         byte[] elements = info.getBytes();
         writeStruct(buf, elements);
+    }
+
+    public static AdditionalInfo readAdditionalInfo(ChannelBuffer buf) {
+        byte[] elements = readStruct(buf);
+        if (elements == null) {
+            return null;
+        }
+        return buildAdditionalInfo(ChannelBuffers.wrappedBuffer(elements));
+    }
+
+    public static AdditionalInfo buildAdditionalInfo(ChannelBuffer buf) {
+
+        AdditionalInfo ai = new AdditionalInfo();
+
+        byte[] binfo = readStruct(buf);
+        if (binfo != null) {
+            ai.setBinfo(BChannelInformation.getInformation(binfo));
+        }
+
+        byte[] kfac = readStruct(buf);
+        if (kfac != null) {
+            ai.setKFacility(KeypadFacility.getKeypadFacility(kfac));
+        }
+
+        byte[] udata = readStruct(buf);
+        if (udata != null) {
+            ai.setUserData(User2UserData.getUser2UserData(udata));
+        }
+
+        byte[] sc = readStruct(buf);
+        if (sc != null) {
+            ai.setSendingComplete((sc[0] & 0xff) == 0xa1 && (sc[1] & 0xff) == 1);
+        }
+
+        return ai;
     }
 
     public static void writeController(ChannelBuffer buf, Controller controller) {
@@ -183,12 +276,20 @@ public class ParameterBuffers {
         writeDword(buf, dword);
     }
 
+    public static Controller readController(ChannelBuffer buf) {
+        return new Controller(readDword(buf));
+    }
+
     public static void writeCipValue(ChannelBuffer buf, CompatibilityInformationProfile cip) {
         if (cip == null) {
-            writeWord(buf, CompatibilityInformationProfile.NO_PREDEFINED_PROFILE.getValue());
+            writeWord(buf, CompatibilityInformationProfile.NO_PREDEFINED_PROFILE.getBitField());
             return;
         }
-        writeWord(buf, cip.getValue());
+        writeWord(buf, cip.getBitField());
+    }
+
+    public static CompatibilityInformationProfile readCipValue(ChannelBuffer buf) {
+        return CompatibilityInformationProfile.valueOf(readWord(buf));
     }
 
     public static void writeBProtocol(ChannelBuffer buf, BProtocol bProtocol) {
@@ -207,6 +308,14 @@ public class ParameterBuffers {
         }
         byte[] elements = bc.getBytes();
         writeStruct(buf, elements);
+    }
+
+    public static BearerCapability readBearerCapability(ChannelBuffer buf) {
+        byte[] elements = readStruct(buf);
+        if (elements == null) {
+            return null;
+        }
+        return new BearerCapability(elements);
     }
 
     public static LowLayerCompatibility readLowLayerCompatibility(ChannelBuffer buf) {
@@ -235,5 +344,12 @@ public class ParameterBuffers {
         writeStruct(buf, elements);
     }
 
+    public static HighLayerCompatibility readHighLayerCompatibility(ChannelBuffer buf) {
+        byte[] elements = readStruct(buf);
+        if (elements == null) {
+            return null;
+        }
+        return new HighLayerCompatibility(elements);
+    }
 
 }

@@ -19,41 +19,44 @@
  */
 package org.neociclo.capi20.message;
 
-import static org.neociclo.capi20.message.MessageType.INFO_CONF;
-import static org.neociclo.capi20.parameter.ParameterBuffers.readInfo;
-import static org.neociclo.capi20.parameter.ParameterBuffers.readPlci;
-import net.sourceforge.jcapi.message.parameter.PLCI;
+import static org.neociclo.capi20.message.MessageType.*;
+import static org.neociclo.capi20.parameter.ParameterBuffers.*;
+
+import net.sourceforge.jcapi.message.parameter.NCCI;
+import net.sourceforge.jcapi.message.parameter.NCPI;
 
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.neociclo.capi20.parameter.Info;
+import org.neociclo.capi20.parameter.B3Protocol;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class InfoConf extends ReceiveMessage {
+public class ConnectB3Ind extends ReceiveMessage {
 
-    private PLCI plci;
-    private Info info;
+    private NCCI ncci;
+    private NCPI ncpi;
+    private B3Protocol b3Protocol;
 
-    public InfoConf(ChannelBuffer buffer) {
-        super(INFO_CONF, buffer);
+    public ConnectB3Ind(ChannelBuffer buffer, B3Protocol b3) {
+        super(CONNECT_B3_IND, buffer);
+        this.b3Protocol = b3;
     }
 
-    public PLCI getPlci() {
-        return plci;
+    public NCCI getNcci() {
+        return ncci;
     }
 
-    protected void setPlci(PLCI plci) {
-        this.plci = plci;
+    public NCPI getNcpi() {
+        return ncpi;
     }
 
-    public Info getInfo() {
-        return info;
+    protected void setNcci(NCCI ncci) {
+        this.ncci = ncci;
     }
 
-    protected void setInfo(Info info) {
-        this.info = info;
+    protected void setNcpi(NCPI ncpi) {
+        this.ncpi = ncpi;
     }
 
     // -------------------------------------------------------------------------
@@ -62,8 +65,8 @@ public class InfoConf extends ReceiveMessage {
 
     @Override
     protected void setValues(ChannelBuffer buf) {
-        setPlci(readPlci(buf));
-        setInfo(readInfo(buf));
+        setNcci(readNcci(buf));
+        setNcpi(readNcpi(buf, b3Protocol, CONNECT_B3_IND));
     }
 
 }

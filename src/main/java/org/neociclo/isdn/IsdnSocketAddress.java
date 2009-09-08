@@ -17,39 +17,43 @@
  *
  * $Id$
  */
-package org.neociclo.isdn.netty.channel;
+package org.neociclo.isdn;
 
-import net.sourceforge.jcapi.Jcapi;
-
-import org.neociclo.capi20.Capi;
-import org.neociclo.capi20.jcapi.JcapiAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.net.SocketAddress;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class JCapiFactory implements CapiFactory {
+public class IsdnSocketAddress extends SocketAddress {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JCapiFactory.class);
+    private static final long serialVersionUID = -838183852292629142L;
 
-    private static Capi jCapiSingleton;
-
-    public Capi getCapi() {
-
-        if (jCapiSingleton == null) {
-            try {
-                jCapiSingleton = new JcapiAdapter(new Jcapi());
-            } catch (IllegalStateException ise) {
-                LOGGER.error("Cannot create the Capi instance. JCapi initialization failed.", ise);
-            }
-        }
-        return jCapiSingleton;
+    private IsdnAddress address;
+    
+    public IsdnSocketAddress(String isdnNumber) {
+        this(isdnNumber, null);
     }
 
-    public void releaseExternalResources() {
-        // TODO Auto-generated method stub
+    public IsdnSocketAddress(String isdnNumber, String isdnSubAddress) {
+        super();
+        this.address = new IsdnAddress(isdnNumber, isdnSubAddress);
     }
 
+    public IsdnAddress getAddress() {
+        return address;
+    }
+
+    public String getNumber() {
+        return address.getNumber();
+    }
+
+    public String getSubAddress() {
+        return address.getSubAddress();
+    }
+
+    @Override
+    public String toString() {
+        return getNumber() + (getSubAddress() == null ? "" : ':' + getSubAddress());
+    }
 }

@@ -19,13 +19,15 @@
  */
 package org.neociclo.capi20.parameter;
 
+import org.neociclo.capi20.util.IBitType;
+
 /**
  * Compatibility Information Profile.
  *
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public enum CompatibilityInformationProfile {
+public enum CompatibilityInformationProfile implements IBitType {
 
     NO_PREDEFINED_PROFILE (0),
     SPEECH (1),
@@ -51,14 +53,23 @@ public enum CompatibilityInformationProfile {
     VIDEO_TELEPHONY_1ST_CONNECTION (27),
     VIDEO_TELEPHONY_2ND_CONNECTION (28);
 
-    private byte value;
-
-    private CompatibilityInformationProfile(int v) {
-        this.value = (byte) v;
+    public static CompatibilityInformationProfile valueOf(int v) {
+        for (CompatibilityInformationProfile cip : CompatibilityInformationProfile.values()) {
+            if (cip.getBitField() == v) {
+                return cip;
+            }
+        }
+        return null;
     }
 
-    public int getValue() {
-        return value;
+    private byte bitField;
+
+    private CompatibilityInformationProfile(int v) {
+        this.bitField = (byte) v;
+    }
+
+    public int getBitField() {
+        return bitField;
     }
     
 }
