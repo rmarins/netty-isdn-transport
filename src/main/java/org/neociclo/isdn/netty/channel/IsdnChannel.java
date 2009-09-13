@@ -39,6 +39,4 @@ public interface IsdnChannel extends Channel {
 
     void setConnected();
 
-    void setConnectFailure(Throwable cause);
-
 }

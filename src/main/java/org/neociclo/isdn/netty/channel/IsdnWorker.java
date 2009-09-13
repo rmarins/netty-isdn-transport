@@ -30,12 +30,14 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
-import org.neociclo.capi20.Capi;
 import org.neociclo.capi20.CapiException;
 import org.neociclo.capi20.Controller;
 import org.neociclo.capi20.Profile;
+import org.neociclo.capi20.SimpleCapi;
 import org.neociclo.capi20.message.BaseMessage;
 import org.neociclo.capi20.message.CapiMessage;
+import org.neociclo.capi20.message.ListenConf;
+import org.neociclo.capi20.message.ListenReq;
 import org.neociclo.capi20.parameter.Info;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,16 +53,16 @@ class IsdnWorker implements Runnable {
     /** 1 Kilobyte (1024 bytes). */
     private static final int KB = 1024;
 
-    public static void initDevice(IsdnClientChannel channel) throws CapiException {
+    public static void initDevice(IsdnChannelInternal channel) throws CapiException {
 
         // check if already initialized
-        if (channel.initialized) {
+        if (channel.isInitialized()) {
             LOGGER.warn("IsdnCapiChannel already initialized. Skipping initDevice(): {}.", channel);
             return;
         }
 
         // retrieve number of controllers, first
-        int numOfControllers = channel.capi.getNumberOfControllers();
+        int numOfControllers = channel.capi().getNumberOfControllers();
 
         // query profile on the total of controllers
         ArrayList<Controller> controllers = new ArrayList<Controller>(numOfControllers);
@@ -72,15 +74,15 @@ class IsdnWorker implements Runnable {
         // select the channel controller
         channel.selectController(controllers);
 
-        channel.initialized = true;
+        channel.setInitialized(true);
 
     }
 
-    public static int register(IsdnClientChannel channel) throws CapiException {
+    public static int register(IsdnChannelInternal channel) throws CapiException {
 
         LOGGER.trace("register()");
 
-        if (!channel.initialized) {
+        if (!channel.isInitialized()) {
             throw new IllegalStateException("IsdnCapiChannel not initialized.");
         }
 
@@ -98,12 +100,12 @@ class IsdnWorker implements Runnable {
         LOGGER.trace("Capi.register() :: msgBufSize = {}, mxLogicalCon = {}, maxBDataBlocks = {}, maxBDataLen = {}",
                 new Object[] { messageBufferSize, maxLogicalConnection, maxBDataBlocks, maxBDataLen });
 
-        int appID = channel.capi.register(messageBufferSize, maxLogicalConnection, maxBDataBlocks, maxBDataLen);
+        int appID = channel.capi().register(messageBufferSize, maxLogicalConnection, maxBDataBlocks, maxBDataLen);
         return appID;
 
     }
 
-    public static void write(IsdnClientChannel channel, ChannelFuture future, Object message) {
+    public static void write(IsdnChannelInternal channel, ChannelFuture future, Object message) {
 
         if (message == ChannelBuffers.EMPTY_BUFFER) {
             // set flush() signal complete
@@ -123,7 +125,7 @@ class IsdnWorker implements Runnable {
 
             LOGGER.trace("Capi.putMessage() :: {}", a);
 
-            channel.capi.simplePutMessage(channel.worker.appID, a.getBuffer());
+            channel.capi().simplePutMessage(channel.worker().appID, a.getBuffer());
 
             // bytesWritten = general message format length + b3 data length
             int bytesWritten = a.getTotalLength();
@@ -148,20 +150,20 @@ class IsdnWorker implements Runnable {
 
     }
 
-    private static void setMessageAppIdAndNumber(IsdnClientChannel channel, CapiMessage a) {
+    private static void setMessageAppIdAndNumber(IsdnChannelInternal channel, CapiMessage a) {
         BaseMessage b = (BaseMessage) a;
 
-        b.setAppID(channel.worker.appID);
+        b.setAppID(channel.worker().appID);
 
         // set message number for message REQ only
         int subCommand = (a.getType().getSubCommand() & 0xff);
         if (subCommand == 0x80) {
-            b.setMessageID(channel.worker.messageCounter.getAndIncrement());
+            b.setMessageID(channel.worker().messageCounter.getAndIncrement());
         }
 
     }
 
-    public static void setInterestOps(IsdnClientChannel channel, ChannelFuture future, int interestOps) {
+    public static void setInterestOps(IsdnChannelInternal channel, ChannelFuture future, int interestOps) {
 
         LOGGER.trace("setInterestOps() :: interestOps = {}", interestOps);
 
@@ -182,12 +184,12 @@ class IsdnWorker implements Runnable {
 
             future.setSuccess();
             if (changed) {
-                synchronized (channel.interestOpsLock) {
+                synchronized (channel.interestOpsLock()) {
                     channel.setInterestOpsNow(interestOps);
 
                     // Notify the worker so it stops or continues reading.
                     Thread currentThread = Thread.currentThread();
-                    Thread workerThread = channel.workerThread;
+                    Thread workerThread = channel.worker().workerThread;
                     if (workerThread != null && currentThread != workerThread) {
                         workerThread.interrupt();
                     }
@@ -202,7 +204,7 @@ class IsdnWorker implements Runnable {
 
     }
 
-    public static void close(IsdnClientChannel channel, ChannelFuture future) {
+    public static void close(IsdnChannelInternal channel, ChannelFuture future) {
 
         LOGGER.trace("close()");
 
@@ -210,13 +212,13 @@ class IsdnWorker implements Runnable {
         boolean bound = channel.isBound();
 
         try {
-            channel.worker.release();
+            channel.worker().release();
             if (channel.setClosed()) {
                 future.setSuccess();
                 if (connected) {
                     // interrupt the worker so it stops reading
                     Thread currentThread = Thread.currentThread();
-                    Thread workerThread = channel.workerThread;
+                    Thread workerThread = channel.worker().workerThread;
                     if (workerThread != null && currentThread != workerThread) {
                         workerThread.interrupt();
                     }
@@ -237,11 +239,10 @@ class IsdnWorker implements Runnable {
 
     }
 
-    private static Controller getProfile(IsdnClientChannel channel, final int controller) throws CapiException {
+    private static Controller getProfile(IsdnChannelInternal channel, final int controller) throws CapiException {
 
-        final Profile profile = channel.capi.simpleGetProfile(controller);
-
-        final Capi capi = channel.capi;
+        final SimpleCapi capi = channel.capi();
+        final Profile profile = capi.simpleGetProfile(controller);
 
         return new Controller() {
 
@@ -266,15 +267,15 @@ class IsdnWorker implements Runnable {
 
     }
 
-    private final IsdnClientChannel channel;
+    private final IsdnChannelInternal channel;
     private final int appID;
     private final AtomicInteger messageCounter;
 
     private boolean released;
 
-    private volatile ChannelFuture connectFuture;
+    private Thread workerThread;
 
-    public IsdnWorker(IsdnClientChannel channel, int port, ChannelFuture connectFuture) {
+    public IsdnWorker(IsdnChannelInternal channel, int port) {
         super();
 
         if (port <= 0) {
@@ -283,7 +284,6 @@ class IsdnWorker implements Runnable {
         }
 
         this.channel = channel;
-        this.connectFuture = connectFuture;
         this.appID = port;
         this.messageCounter = new AtomicInteger(0);
 
@@ -300,7 +300,7 @@ class IsdnWorker implements Runnable {
         }
 
         LOGGER.trace("Capi.release()");
-        channel.capi.release(appID);
+        channel.capi().release(appID);
 
         released = true;
 
@@ -308,16 +308,16 @@ class IsdnWorker implements Runnable {
 
     public void run() {
 
-        channel.workerThread = Thread.currentThread();
+        workerThread = Thread.currentThread();
 
         while (channel.isOpen()) {
 
-            synchronized (channel.interestOpsLock) {
+            synchronized (channel.interestOpsLock()) {
                 while (!channel.isReadable()) {
                     try {
                         // notify() is not called at all.
                         // close() and setInterestOps() calls Thread.interrupt()
-                        channel.interestOpsLock.wait();
+                        channel.interestOpsLock().wait();
                     } catch (InterruptedException e) {
                         if (!channel.isOpen()) {
                             break;
@@ -330,7 +330,7 @@ class IsdnWorker implements Runnable {
             try {
                 // asynchronous waiting uninterruptably
                 LOGGER.trace("Capi.waitForSignal() :: locking... ");
-                channel.capi.waitForSignal(appID);
+                channel.capi().waitForSignal(appID);
                 LOGGER.trace("Capi.waitForSignal() :: released!");
                 
 //                // retrieve message from CAPI queue
@@ -361,7 +361,7 @@ class IsdnWorker implements Runnable {
 
         // setting the workerThread to null will prevent any channel
         // operations from interrupting this thread from now on.
-        channel.workerThread = null;
+        workerThread = null;
 
         // clean up
         ChannelFuture closeFuture = channel.getCloseFuture();
@@ -373,9 +373,12 @@ class IsdnWorker implements Runnable {
     }
 
     private CapiMessage getMessage() throws CapiException {
+        return getMessage(channel, appID);
+    }
 
-        ChannelBuffer messageBuffer = channel.capi.simpleGetMessage(appID);
-        
+    public static CapiMessage getMessage(IsdnChannelInternal channel, int appID) throws CapiException {
+
+        ChannelBuffer messageBuffer = channel.capi().simpleGetMessage(appID);
 
         if (messageBuffer == null) {
             return null;
@@ -388,18 +391,35 @@ class IsdnWorker implements Runnable {
         return message;
     }
 
-    public void setConnected() {
-        if (connectFuture != null) {
-            connectFuture.setSuccess();
-            connectFuture = null;
+    public static boolean listen(IsdnServerChannel channel, ChannelFuture future) throws CapiException {
+
+        int appID = channel.worker().appID;
+
+        CapiMessage listenReq = createListenReq(channel);
+        write(channel, future, listenReq);
+
+        channel.capi().waitForSignal(appID);
+        CapiMessage ret = channel.worker().getMessage();
+
+        if (ret instanceof ListenConf) {
+            ListenConf listenConf = (ListenConf) ret;
+            if (listenConf.getInfo() == Info.REQUEST_ACCEPTED) {
+                return true;
+            }
         }
+
+        return false;
     }
 
-    public void setConnectFailure(Throwable cause) {
-        if (connectFuture != null) {
-            connectFuture.setFailure(cause);
-            connectFuture = null;
-        }
+    private static CapiMessage createListenReq(IsdnServerChannel channel) {
+
+        IsdnChannelConfig config = channel.getConfig();
+
+        ListenReq req = new ListenReq();
+        req.setController(new net.sourceforge.jcapi.message.parameter.Controller(channel.getController().getNumber()));
+        req.setCip(config.getCompatibilityInformationProfile());
+
+        return req;
     }
 
 }

@@ -48,6 +48,7 @@ import org.neociclo.capi20.parameter.Info;
 import org.neociclo.capi20.parameter.NumberType;
 import org.neociclo.capi20.parameter.NumberingPlan;
 import org.neociclo.capi20.parameter.PresentationIndicator;
+import org.neociclo.capi20.parameter.ScreeningIndicator;
 import org.neociclo.capi20.parameter.SubAddressType;
 import org.neociclo.isdn.IsdnAddress;
 import org.neociclo.isdn.IsdnSocketAddress;
@@ -58,7 +59,7 @@ import org.neociclo.isdn.netty.channel.IsdnChannelConfig;
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-class ParameterBuilder {
+public class ParameterHelper {
 
     public static NCPI createNcpi(IsdnChannel channel, int b3Protocol, MessageType messageType) {
 
@@ -186,6 +187,11 @@ class ParameterBuilder {
         return bc;
     }
 
+    public static BProtocol bProtocol(IsdnChannelConfig c) {
+        return bProtocol(c.getB1(), c.getB2(), c.getB3(), c.getB1Config(), c.getB2Config(), c.getB3Config(), c
+                .getBChannelOperation());
+    }
+
     public static BProtocol bProtocol(B1Protocol b1, B2Protocol b2, B3Protocol b3, B1Configuration b1Config,
             B2Configuration b2Config, B3Configuration b3Config, BChannelOperation oper) {
 
@@ -276,7 +282,12 @@ class ParameterBuilder {
     }
 
     public static int subAddressType(SubAddressType type) {
-        return (type == null ? ((NSAP.getBinValue() & 0x70) >> 4) : ((type.getBinValue() & 0x70) >> 4));
+        return (type == null ? ((NSAP.intValue() & 0x70) >> 4) : ((type.intValue() & 0x70) >> 4));
+    }
+
+    public static SubAddressType subAddressType(int type, boolean oddIndicator) {
+        int oddEven = (oddIndicator ? 0x08 : 0x00);
+        return (type == 0 ? NSAP : SubAddressType.valueOf(((type & 0x07) << 4) | oddEven));
     }
 
     public static int cipValue(CompatibilityInformationProfile cip) {
@@ -298,6 +309,7 @@ class ParameterBuilder {
         int presentationIndicator = presentationIndicator(address.getPresentation());
     
         CallingPartyNumber num = new CallingPartyNumber(numberType, numberingPlan, presentationIndicator, number);
+        num.setScreeningIndicator(screeningIndicator(address.getScreening()));
         return num;
     }
 
@@ -306,15 +318,63 @@ class ParameterBuilder {
     }
 
     public static int numberingPlan(NumberingPlan plan) {
-        return (plan == null ? NUMBERINGPLAN_UNKNOWN : plan.getBinValue());
+        return (plan == null ? NUMBERINGPLAN_UNKNOWN : plan.intValue());
+    }
+
+    public static NumberingPlan numberingPlan(int plan) {
+        return (plan == 0 ? NumberingPlan.UNKNOWN_NUMBER_PLAN : NumberingPlan.valueOf(plan & 0x0F));
     }
 
     public static int numberType(NumberType type) {
-        return (type == null ? NUMBERTYPE_UNKNOWN : (type.getBinValue() >> 4));
+        return (type == null ? NUMBERTYPE_UNKNOWN : (type.intValue() >> 4));
+    }
+
+    public static NumberType numberType(int type) {
+        return (type == 0 ? NumberType.UNKOWN_NUMBER_TYPE : NumberType.valueOf((type & 0x0F) << 4));
     }
 
     public static int presentationIndicator(PresentationIndicator ind) {
-        return (ind == null ? PRESENTATION_ALLOWED : (ind.getBinValue() >> 5));
+        return (ind == null ? PRESENTATION_ALLOWED : ((ind.intValue() & 0x60) >> 5));
+    }
+
+    public static PresentationIndicator presentationIndicator(int ind) {
+        return (ind == 0 ? PresentationIndicator.ALLOWED : PresentationIndicator.valueOf((ind & 0x06) << 5));
+    }
+
+    public static ScreeningIndicator screeningIndicator(int ind) {
+        return (ind == 0 ? ScreeningIndicator.NOT_SCREENED : ScreeningIndicator.valueOf(ind & 0x03));
+    }
+
+    public static int screeningIndicator(ScreeningIndicator ind) {
+        return (ind == null ? SCREENING_USER_PROVIDED_NOT_SCREENED : (ind.intValue() & 0x03));
+    }
+
+    public static IsdnSocketAddress callingAddress(CallingPartyNumber number, CallingPartySubAddress subAddress) {
+
+        IsdnAddress ia = new IsdnAddress(number.getNumber(), (subAddress == null ? null : subAddress.getNumber()));
+        ia.setNumberType(numberType(number.getNumberType()));
+        ia.setNumberingPlan(numberingPlan(number.getNumberingPlan()));
+        ia.setPresentation(presentationIndicator(number.getPresentationIndicator()));
+        ia.setScreening(screeningIndicator(number.getScreeningIndicator()));
+
+        if (subAddress != null) {
+            ia.setSubAddressType(subAddressType(subAddress.getSubaddressType(), subAddress.isOddEvenIndicator()));
+        }
+
+        return new IsdnSocketAddress(ia);
+    }
+
+    public static IsdnSocketAddress calledAddress(CalledPartyNumber number, CalledPartySubAddress subAddress) {
+
+        IsdnAddress ia = new IsdnAddress(number.getNumber(), (subAddress == null ? null : subAddress.getNumber()));
+        ia.setNumberType(numberType(number.getNumberType()));
+        ia.setNumberingPlan(numberingPlan(number.getNumberingPlan()));
+
+        if (subAddress != null) {
+            ia.setSubAddressType(subAddressType(subAddress.getSubaddressType(), subAddress.isOddEvenIndicator()));
+        }
+
+        return new IsdnSocketAddress(ia);
     }
 
     public static CalledPartyNumber calledPartyNumber(IsdnSocketAddress called) {
@@ -324,8 +384,7 @@ class ParameterBuilder {
         String number = allowEmptyParam(address.getNumber());
 
         int numberType = numberType(address.getNumberType());
-        int numberingPlan = (address.getNumberingPlan() == null ? NUMBERINGPLAN_UNKNOWN : address.getNumberingPlan()
-                .getBinValue());
+        int numberingPlan = numberingPlan(address.getNumberingPlan());
     
         CalledPartyNumber num = new CalledPartyNumber(numberType, numberingPlan, number);
         return num;
@@ -334,6 +393,6 @@ class ParameterBuilder {
     /**
      * Instance construction not allowed. An utility class.
      */
-    private ParameterBuilder() { }
+    private ParameterHelper() { }
 
 }

@@ -19,20 +19,18 @@
  */
 package org.neociclo.isdn.netty.channel;
 
-import static org.jboss.netty.channel.Channels.fireChannelOpen;
-import static org.neociclo.isdn.netty.handler.IsdnClientHandlerFactory.*;
+import static org.jboss.netty.channel.Channels.*;
 
 import java.net.SocketAddress;
+import java.util.ArrayList;
 
 import org.jboss.netty.channel.AbstractServerChannel;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelSink;
 import org.neociclo.capi20.Capi;
 import org.neociclo.capi20.Controller;
 import org.neociclo.capi20.SimpleCapi;
 import org.neociclo.isdn.IsdnSocketAddress;
-import org.neociclo.isdn.netty.handler.IsdnClientHandlerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,17 +38,29 @@ import org.slf4j.LoggerFactory;
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class IsdnServerChannel extends AbstractServerChannel implements IsdnChannel {
+final class IsdnServerChannel extends AbstractServerChannel implements IsdnChannelInternal {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IsdnServerChannel.class);
-
-    public static final String HANDLER_NAME = "IsdnServerChannelStateMachine";
 
     private final SimpleCapi capi;
     private final ControllerSelector selector;
     private final IsdnChannelConfig config;
 
-    public IsdnServerChannel(ChannelFactory factory, ChannelPipeline pipeline, IsdnChannelSink sink, Capi capi,
+    private boolean initialized;
+    private Controller controller;
+
+    private IsdnSocketAddress callingAddress;
+    private IsdnSocketAddress calledAddress;
+
+    private IsdnWorker worker;
+    private Object interestOpsLock = new Object();
+
+    private boolean connected;
+    boolean bound;
+
+    private int appID;
+
+    public IsdnServerChannel(ChannelFactory factory, ChannelPipeline pipeline, IsdnServerPipelineSink sink, Capi capi,
             ControllerSelector controllerSelector, IsdnConfigurator configurator) {
 
         super(factory, pipeline, sink);
@@ -64,9 +74,6 @@ public class IsdnServerChannel extends AbstractServerChannel implements IsdnChan
         this.capi = new SimpleCapi(capi);
         this.selector = controllerSelector;
 
-        // setup isdn server channel handler StateMachine based on the protocol
-        getPipeline().addFirst(HANDLER_NAME, getIsdnServerStateMachineHandler(this, HANDLER_NAME));
-
         // setup channel configuration
         this.config = new IsdnChannelConfig();
         if (configurator != null) {
@@ -74,56 +81,110 @@ public class IsdnServerChannel extends AbstractServerChannel implements IsdnChan
         }
 
         // use ChannelSink to init CAPI device and callback selectController()
-//        sink.initialize(this);
+        sink.initialize(this);
 
         // send upstream CHANNEL_OPEN event
         fireChannelOpen(this);
 
     }
 
+    public SimpleCapi capi() {
+        return capi;
+    }
+
+    public IsdnWorker worker() {
+        return worker;
+    }
+
     public IsdnSocketAddress getCalledAddress() {
-        // TODO Auto-generated method stub
-        return null;
+        return calledAddress;
     }
 
     public IsdnSocketAddress getCallingAddress() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public IsdnChannelConfig getConfig() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Controller getController() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public void setConnectFailure(Throwable cause) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void setConnected() {
-        // TODO Auto-generated method stub
-
+        return callingAddress;
     }
 
     public SocketAddress getLocalAddress() {
-        // TODO Auto-generated method stub
-        return null;
+        return getCalledAddress();
     }
 
     public SocketAddress getRemoteAddress() {
-        // TODO Auto-generated method stub
-        return null;
+        return getCallingAddress();
+    }
+
+    public IsdnChannelConfig getConfig() {
+        return config;
+    }
+
+    public Controller getController() {
+        return controller;
+    }
+
+    public void setConnected() {
+        this.connected = true;
     }
 
     public boolean isBound() {
-        // TODO Auto-generated method stub
-        return false;
+        return isOpen() && bound;
+    }
+
+    public boolean isConnected() {
+        return isOpen() && connected;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+    public void selectController(ArrayList<Controller> controllers) {
+        // do only once
+        if (controller == null) {
+            this.controller = selector.selectOne(this, controllers);
+        }
+    }
+
+    public void setInitialized(boolean b) {
+        this.initialized = b;
+    }
+
+    public Object interestOpsLock() {
+        return interestOpsLock ;
+    }
+
+    @Override
+    public void setInterestOpsNow(int interestOps) {
+        super.setInterestOpsNow(interestOps);
+    }
+
+    @Override
+    public boolean setClosed() {
+        this.connected = false;
+        return super.setClosed();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s(id %s, %s)", getClass().getSimpleName(), getId(), getLocalAddress());
+    }
+
+    void setCallingAddress(IsdnSocketAddress callingAddress) {
+        this.callingAddress = callingAddress;
+    }
+
+    void setCalledAddress(IsdnSocketAddress calledAddress) {
+        this.calledAddress = calledAddress;
+    }
+
+    void setWorker(IsdnWorker worker) {
+        this.worker = worker;
+    }
+
+    public void setAppID(int id) {
+        this.appID = id;
+    }
+
+    public int getAppID() {
+        return appID;
     }
 
 }

@@ -26,14 +26,23 @@ public enum ScreeningIndicator {
     VERIFIED_AND_FAILED (0x02),
     NETWORK_PROVIDED (0x03);
 
-    private short binValue;
-
-    private ScreeningIndicator(int coded) {
-        this.binValue = (short) coded;
+    public static ScreeningIndicator valueOf(int ind) {
+        for (ScreeningIndicator a : values()) {
+            if (a.intValue() == ind) {
+                return a;
+            }
+        }
+        return null;
     }
 
-    public short getBinValue() {
-        return binValue;
+    private byte octetCode;
+
+    private ScreeningIndicator(int coded) {
+        this.octetCode = (byte) (coded & 0xFF);
+    }
+
+    public int intValue() {
+        return (octetCode & 0xFF);
     }
 
 }

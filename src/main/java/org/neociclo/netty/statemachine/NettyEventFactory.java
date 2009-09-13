@@ -19,35 +19,39 @@
  */
 package org.neociclo.netty.statemachine;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import org.apache.mina.statemachine.context.StateContext;
-import org.apache.mina.statemachine.event.EventArgumentsInterceptor;
+import org.apache.mina.statemachine.event.DefaultEventFactory;
+import org.apache.mina.statemachine.event.Event;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class NettyEventInterceptor implements EventArgumentsInterceptor {
+public class NettyEventFactory extends DefaultEventFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NettyEventInterceptor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NettyEventFactory.class);
 
-    public Object[] modify(Object[] eventArgs) {
-
-        ArrayList<Object> allArgs = new ArrayList<Object>();
-        for (Object arg : eventArgs) {
+    @Override
+    public Event create(StateContext context, Method method, Object[] arguments) {
+        List<Object> allArgs = new ArrayList<Object>(5);
+        for (Object arg : arguments) {
             if (arg instanceof ChannelHandlerContext) {
                 // Channel
                 Channel channel = ((ChannelHandlerContext) arg).getChannel();
                 allArgs.add(channel);
 
-                // Channel Config (usually)
+                // StateMachine context
                 StateContext stateContext = (StateContext) ((ChannelHandlerContext) arg).getAttachment();
                 if (stateContext != null) {
                     allArgs.add(stateContext);
@@ -60,12 +64,13 @@ public class NettyEventInterceptor implements EventArgumentsInterceptor {
         }
 
         if (allArgs.size() > 0) {
-            LOGGER.trace("arguments = {} ", allArgs.toString());
-            Collections.addAll(allArgs, eventArgs);
-            return allArgs.toArray();
-        } else {
-            return eventArgs;
+            Collections.addAll(allArgs, arguments);
+            arguments = allArgs.toArray();
         }
+
+        Event e = super.create(context, method, arguments);
+        LOGGER.trace("Created: {}", e);
+        return e;
     }
 
 }

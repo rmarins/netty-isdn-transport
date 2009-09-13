@@ -20,8 +20,7 @@
 package org.neociclo.isdn.netty.handler;
 
 import static org.neociclo.capi20.message.MessageType.*;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.additionalInfo;
-import static org.neociclo.isdn.netty.handler.ParameterBuilder.*;
+import static org.neociclo.isdn.netty.handler.ParameterHelper.*;
 import net.sourceforge.jcapi.message.parameter.BProtocol;
 import net.sourceforge.jcapi.message.parameter.NCPI;
 
@@ -32,7 +31,9 @@ import org.neociclo.capi20.message.ConnectActiveInd;
 import org.neociclo.capi20.message.ConnectActiveResp;
 import org.neociclo.capi20.message.ConnectB3ActiveInd;
 import org.neociclo.capi20.message.ConnectB3ActiveResp;
+import org.neociclo.capi20.message.ConnectB3Ind;
 import org.neociclo.capi20.message.ConnectB3Req;
+import org.neociclo.capi20.message.ConnectB3Resp;
 import org.neociclo.capi20.message.ConnectInd;
 import org.neociclo.capi20.message.ConnectReq;
 import org.neociclo.capi20.message.ConnectResp;
@@ -45,7 +46,6 @@ import org.neociclo.capi20.message.DisconnectB3Resp;
 import org.neociclo.capi20.message.DisconnectInd;
 import org.neociclo.capi20.message.DisconnectReq;
 import org.neociclo.capi20.message.DisconnectResp;
-import org.neociclo.capi20.message.ListenReq;
 import org.neociclo.capi20.parameter.Reject;
 import org.neociclo.isdn.netty.channel.IsdnChannel;
 import org.neociclo.isdn.netty.channel.IsdnChannelConfig;
@@ -55,6 +55,16 @@ import org.neociclo.isdn.netty.channel.IsdnChannelConfig;
  * @version $Rev$ $Date$
  */
 class IsdnConnectionHelper {
+
+    public static ConnectB3Resp replyConnectB3Ind(ConnectB3Ind ind, Reject response) {
+        ConnectB3Resp resp = new ConnectB3Resp();
+        resp.setAppID(ind.getAppID());
+        resp.setMessageID(ind.getMessageID());
+        resp.setNcci(ind.getNcci());
+        resp.setNcpi(ind.getNcpi());
+        resp.setResponse(response);
+        return resp;
+    }
 
     public static DataB3Req createDataB3Req(IsdnChannel channel, ChannelBuffer data) {
         IsdnChannelConfig config = channel.getConfig();
@@ -214,11 +224,6 @@ class IsdnConnectionHelper {
         resp.setAdditionalInfo(ind.getAdditionalInfo());
 
         return resp;
-    }
-
-    public static ListenReq createListenReq(IsdnChannel channel) {
-        // TODO do implementation
-        return null;
     }
 
 }

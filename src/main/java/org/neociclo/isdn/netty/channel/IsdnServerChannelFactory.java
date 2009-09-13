@@ -34,6 +34,7 @@ import org.neociclo.isdn.CapiFactory;
  */
 public class IsdnServerChannelFactory implements ServerChannelFactory {
 
+    private Executor bossExecutor;
     private Executor workerExecutor;
     private IsdnServerPipelineSink sink;
     private CapiFactory capiFactory;
@@ -43,22 +44,24 @@ public class IsdnServerChannelFactory implements ServerChannelFactory {
     /**
      * Creates a new instance.
      */
-    public IsdnServerChannelFactory(Executor workerExecutor, CapiFactory capiFactory) {
-        this(workerExecutor, capiFactory, null);
+    public IsdnServerChannelFactory(Executor bossExecutor, Executor workerExecutor, CapiFactory capiFactory) {
+        this(bossExecutor, workerExecutor, capiFactory, null);
     }
 
     /**
      * Creates a new instance.
      */
-    public IsdnServerChannelFactory(Executor workerExecutor, CapiFactory capiFactory, IsdnConfigurator configurator) {
-        this(workerExecutor, capiFactory, configurator, null);
+    public IsdnServerChannelFactory(Executor bossExecutor, Executor workerExecutor, CapiFactory capiFactory, IsdnConfigurator configurator) {
+        this(bossExecutor, workerExecutor, capiFactory, configurator, null);
     }
 
     /**
      * Creates a new instance.
      */
-    public IsdnServerChannelFactory(Executor workerExecutor, CapiFactory capiFactory, IsdnConfigurator configurator,
+    public IsdnServerChannelFactory(Executor bossExecutor, Executor workerExecutor, CapiFactory capiFactory, IsdnConfigurator configurator,
             ControllerSelector controllerSelector) {
+
+        this.bossExecutor = bossExecutor;
         this.workerExecutor = workerExecutor;
         this.capiFactory = capiFactory;
         this.sink = new IsdnServerPipelineSink(workerExecutor);
@@ -80,6 +83,10 @@ public class IsdnServerChannelFactory implements ServerChannelFactory {
     public void releaseExternalResources() {
         ExecutorUtil.terminate(workerExecutor);
         capiFactory.releaseExternalResources();
+    }
+
+    Executor bossExecutor() {
+        return bossExecutor;
     }
 
 }

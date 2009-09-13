@@ -30,6 +30,11 @@ public class IsdnSocketAddress extends SocketAddress {
     private static final long serialVersionUID = -838183852292629142L;
 
     private IsdnAddress address;
+
+    public IsdnSocketAddress(IsdnAddress address) {
+        super();
+        this.address = address;
+    }
     
     public IsdnSocketAddress(String isdnNumber) {
         this(isdnNumber, null);

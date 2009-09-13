@@ -29,13 +29,22 @@ public enum NumberingPlan {
     PRIVATE_NUMBER_PLAN (0x09),
     RESERVED_NUMBER_PLAN (0x0F);
 
-    private short binValue;
-
-    private NumberingPlan(int coded) {
-        this.binValue = (short) coded;
+    public static NumberingPlan valueOf(int plan) {
+        for (NumberingPlan a : values()) {
+            if (a.intValue() == plan) {
+                return a;
+            }
+        }
+        return null;
     }
 
-    public short getBinValue() {
-        return binValue;
+    private byte octetCode;
+
+    private NumberingPlan(int coded) {
+        this.octetCode = (byte) (coded & 0xFF);
+    }
+
+    public int intValue() {
+        return (octetCode & 0xFF);
     }
 }

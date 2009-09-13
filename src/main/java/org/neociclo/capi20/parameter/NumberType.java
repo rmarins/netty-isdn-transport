@@ -29,13 +29,22 @@ public enum NumberType {
     ABBREVIATED_NUMBER_TYPE (0x60),
     RESERVED_NUMBER_TYPE (0x70);
 
-    private short binValue;
-
-    private NumberType(int coded) {
-        this.binValue = (short) coded;
+    public static NumberType valueOf(int type) {
+        for (NumberType a : values()) {
+            if (a.intValue() == type) {
+                return a;
+            }
+        }
+        return null;
     }
 
-    public short getBinValue() {
-        return binValue;
+    private byte octetCode;
+
+    private NumberType(int coded) {
+        this.octetCode = (byte) (coded & 0xFF);
+    }
+
+    public int intValue() {
+        return (octetCode & 0xFF);
     }
 }

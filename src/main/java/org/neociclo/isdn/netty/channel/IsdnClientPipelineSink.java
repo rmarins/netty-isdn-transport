@@ -40,13 +40,11 @@ import org.neociclo.isdn.IsdnSocketAddress;
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-class IsdnPipelineSink extends AbstractChannelSink implements IsdnChannelSink {
-
-//    private static final Logger LOGGER = LoggerFactory.getLogger(IsdnPipelineSink.class);
+class IsdnClientPipelineSink extends AbstractChannelSink {
 
     private Executor workerExecutor;
 
-    public IsdnPipelineSink(Executor workerExecutor) {
+    public IsdnClientPipelineSink(Executor workerExecutor) {
         super();
         this.workerExecutor = workerExecutor;
     }
@@ -89,7 +87,7 @@ class IsdnPipelineSink extends AbstractChannelSink implements IsdnChannelSink {
 
     }
 
-    public void initialize(IsdnClientChannel channel) {
+    public void initialize(IsdnChannelInternal channel) {
         try {
             // query CAPI controllers
             IsdnWorker.initDevice(channel);
@@ -112,7 +110,7 @@ class IsdnPipelineSink extends AbstractChannelSink implements IsdnChannelSink {
      */
     private void bind(IsdnClientChannel channel, ChannelFuture future, IsdnSocketAddress callingAddress) {
         channel.setCallingAddress(callingAddress);
-        channel.bound = true;
+        channel.setBound(true);
         fireChannelBound(channel, callingAddress);
         future.setSuccess();
     }
@@ -138,12 +136,12 @@ class IsdnPipelineSink extends AbstractChannelSink implements IsdnChannelSink {
             fireChannelConnected(channel, channel.getRemoteAddress());
 
             // start IsdnWorker handle CAPI operations
-            channel.worker = new IsdnWorker(channel, port, future);
+            channel.setWorker(new IsdnWorker(channel, port));
             workerExecutor.execute(
                     new IoWorkerRunnable(
                             new ThreadRenamingRunnable(
-                                    channel.worker,
-                                    String.format("IsdnWorker(port %s): id %s, %s => %s",
+                                    channel.worker(),
+                                    String.format("CLIENT IsdnWorker(appId 0x%04X): id %s, %s => %s",
                                             port,
                                             channel.getId(),
                                             channel.getLocalAddress(),

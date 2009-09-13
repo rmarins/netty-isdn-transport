@@ -25,14 +25,23 @@ public enum SubAddressType {
     USER_SPECIFIED_EVEN (0xA0),
     USER_SPECIFIED_ODD (0xA8);
 
-    private short binValue;
-
-    private SubAddressType(int coded) {
-        this.binValue = (short) coded;
+    public static SubAddressType valueOf(int type) {
+        for (SubAddressType a : values()) {
+            if (a.intValue() == type) {
+                return a;
+            }
+        }
+        return null;
     }
 
-    public short getBinValue() {
-        return binValue;
+    private byte octetCode;
+
+    private SubAddressType(int coded) {
+        this.octetCode = (byte) (coded & 0xFF);
+    }
+
+    public int intValue() {
+        return (octetCode & 0xFF);
     }
 
 }

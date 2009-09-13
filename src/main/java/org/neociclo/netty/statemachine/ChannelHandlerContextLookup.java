@@ -44,6 +44,10 @@ public class ChannelHandlerContextLookup implements StateContextLookup {
 
     public StateContext lookup(Object[] eventArgs) {
 
+        if (channelContext() == null) {
+            return null;
+        }
+
         StateContext ctx = getAttachment();
         if (ctx == null) {
             ctx = contextFactory.create();

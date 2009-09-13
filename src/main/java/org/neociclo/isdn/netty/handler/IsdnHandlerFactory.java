@@ -30,16 +30,16 @@ import org.neociclo.isdn.netty.channel.IsdnChannel;
 import org.neociclo.netty.statemachine.ChannelAllCoverageWrapper;
 import org.neociclo.netty.statemachine.IStateMachineChannelHandler;
 import org.neociclo.netty.statemachine.DefaultStateMachineChannelHandler;
-import org.neociclo.netty.statemachine.NettyEventInterceptor;
+import org.neociclo.netty.statemachine.NettyEventFactory;
 import org.neociclo.netty.statemachine.ChannelHandlerContextLookup;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-public class IsdnClientHandlerFactory {
+public class IsdnHandlerFactory {
 
-    public static ChannelHandler getPhysicalLinkHandler(IsdnChannel channel, String handlerName) {
+    public static ChannelHandler getIsdnClientStateMachineHandler(IsdnChannel channel, String handlerName) {
 
         StateMachine sm = StateMachineFactory.getInstance(Transition.class).create(IsdnConnectionHandler.PLCI_IDLE,
                 new IsdnConnectionHandler());
@@ -50,33 +50,36 @@ public class IsdnClientHandlerFactory {
         StateMachineProxyBuilder proxyBuilder = new StateMachineProxyBuilder();
         proxyBuilder.setName("IsdnClientChannelStateMachine");
         proxyBuilder.setStateContextLookup(stateContextLookup);
-        proxyBuilder.setEventArgumentsInterceptor(new NettyEventInterceptor());
-        // proxyBuilder.setEventFactory(new MyEventFactory());
+        // proxyBuilder.setEventArgumentsInterceptor(new
+        // NettyEventInterceptor());
+        proxyBuilder.setEventFactory(new NettyEventFactory());
 
         IStateMachineChannelHandler engine = proxyBuilder.create(IStateMachineChannelHandler.class, sm);
         return new ChannelAllCoverageWrapper(new DefaultStateMachineChannelHandler(engine));
 
     }
 
-    public static ChannelHandler getIsdnServerStateMachineHandler(IsdnChannel channel, String handlerName) {
+    public static ChannelHandler getAcceptedChannelStateMachineHandler(IsdnChannel channel, String handlerName) {
 
-        StateMachine sm = StateMachineFactory.getInstance(Transition.class).create(IsdnConnectionHandler.LISTEN_IDLE,
-                new IsdnConnectionHandler());
+        StateMachine sm = StateMachineFactory.getInstance(Transition.class).create(
+                IsdnConnectionHandler.P4_WF_CONNECT_ACTIVE_IND, new IsdnConnectionHandler());
 
         StateContextLookup stateContextLookup = new ChannelHandlerContextLookup(new DefaultStateContextFactory(),
                 channel, handlerName);
 
         StateMachineProxyBuilder proxyBuilder = new StateMachineProxyBuilder();
-        proxyBuilder.setName("IsdnServerChannelStateMachine");
+        proxyBuilder.setName("IsdnAcceptedChannelStateMachine");
         proxyBuilder.setStateContextLookup(stateContextLookup);
-        proxyBuilder.setEventArgumentsInterceptor(new NettyEventInterceptor());
-        // proxyBuilder.setEventFactory(new MyEventFactory());
+        // proxyBuilder.setEventArgumentsInterceptor(new
+        // NettyEventInterceptor());
+        proxyBuilder.setEventFactory(new NettyEventFactory());
 
         IStateMachineChannelHandler engine = proxyBuilder.create(IStateMachineChannelHandler.class, sm);
         return new ChannelAllCoverageWrapper(new DefaultStateMachineChannelHandler(engine));
 
     }
 
-    private IsdnClientHandlerFactory() { }
+    private IsdnHandlerFactory() {
+    }
 
 }

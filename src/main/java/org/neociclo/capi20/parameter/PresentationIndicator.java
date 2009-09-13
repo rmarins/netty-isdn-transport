@@ -26,14 +26,23 @@ public enum PresentationIndicator {
     NOT_AVAILABLE (0x40),
     RESERVED (0x60);
 
-    private short binValue;
-
-    private PresentationIndicator(int coded) {
-        this.binValue = (short) coded;
+    public static PresentationIndicator valueOf(int ind) {
+        for (PresentationIndicator a : values()) {
+            if (a.intValue() == ind) {
+                return a;
+            }
+        }
+        return null;
     }
 
-    public short getBinValue() {
-        return binValue;
+    private byte octetCode;
+
+    private PresentationIndicator(int coded) {
+        this.octetCode = (byte) (coded & 0xFF);
+    }
+
+    public int intValue() {
+        return (octetCode & 0xFF);
     }
 
 }

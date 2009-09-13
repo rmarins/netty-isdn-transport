@@ -29,6 +29,7 @@ import net.sourceforge.jcapi.message.parameter.sub.B1Configuration;
 import net.sourceforge.jcapi.message.parameter.sub.B2Configuration;
 import net.sourceforge.jcapi.message.parameter.sub.B3Configuration;
 
+import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.DefaultChannelConfig;
 import org.neociclo.capi20.parameter.B1Protocol;
 import org.neociclo.capi20.parameter.B2Protocol;
@@ -36,12 +37,18 @@ import org.neociclo.capi20.parameter.B3Protocol;
 import org.neociclo.capi20.parameter.BChannelOperation;
 import org.neociclo.capi20.parameter.CompatibilityInformationProfile;
 import org.neociclo.x25.facilities.FacilitiesSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
 public final class IsdnChannelConfig extends DefaultChannelConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(IsdnChannelConfig.class);
+
+    private ChannelPipelineFactory pipelineFactory;
 
     // REGISTER_REQ config
     private int maxBDataLen;
@@ -56,6 +63,8 @@ public final class IsdnChannelConfig extends DefaultChannelConfig {
 
     // CONNECT_REQ config: jcapi types used on channel config
     private B3Configuration b3Configuration;
+    private B2Configuration b2configuration;
+    private B1Configuration b1configuration;
     private BChannelOperation bChannelOperation;
     private AdditionalInfo additionalInfo;
     private BearerCapability bearerCapability;
@@ -133,13 +142,11 @@ public final class IsdnChannelConfig extends DefaultChannelConfig {
     }
 
     public B1Configuration getB1Config() {
-        // TODO add b1 config support
-        return null;
+        return b1configuration;
     }
 
     public B2Configuration getB2Config() {
-        // TODO add b2 config support
-        return null;
+        return b2configuration;
     }
 
     public B3Configuration getB3Config() {
@@ -148,6 +155,14 @@ public final class IsdnChannelConfig extends DefaultChannelConfig {
 
     public void setB3Config(B3Configuration config) {
         this.b3Configuration = config;
+    }
+
+    public void setB2Config(B2Configuration b2Config) {
+        this.b2configuration = b2Config;
+    }
+
+    public void setB1Config(B1Configuration b1Config) {
+        this.b1configuration = b1Config;
     }
 
     public BChannelOperation getBChannelOperation() {
@@ -233,6 +248,17 @@ public final class IsdnChannelConfig extends DefaultChannelConfig {
 
     public void setNcci(NCCI ncci) {
         this.ncci = ncci;
+    }
+    
+    @Override
+    public void setPipelineFactory(ChannelPipelineFactory pipelineFactory) {
+        logger.trace("setPipelineFactory() :: {}", pipelineFactory);
+        this.pipelineFactory = pipelineFactory;
+    }
+
+    @Override
+    public ChannelPipelineFactory getPipelineFactory() {
+        return pipelineFactory;
     }
 
 }

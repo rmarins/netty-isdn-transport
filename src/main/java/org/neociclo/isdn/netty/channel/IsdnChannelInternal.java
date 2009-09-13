@@ -19,14 +19,31 @@
  */
 package org.neociclo.isdn.netty.channel;
 
-import org.jboss.netty.channel.ChannelSink;
+import java.util.ArrayList;
+
+import org.neociclo.capi20.Controller;
+import org.neociclo.capi20.SimpleCapi;
 
 /**
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-interface IsdnChannelSink extends ChannelSink {
+interface IsdnChannelInternal extends IsdnChannel {
 
-    void initialize(IsdnClientChannel channel);
+    SimpleCapi capi();
+
+    IsdnWorker worker();
+
+    void selectController(ArrayList<Controller> controllers);
+
+    void setInitialized(boolean b);
+
+    boolean isInitialized();
+
+    boolean setClosed();
+
+    void setInterestOpsNow(int interestOps);
+
+    Object interestOpsLock();
 
 }

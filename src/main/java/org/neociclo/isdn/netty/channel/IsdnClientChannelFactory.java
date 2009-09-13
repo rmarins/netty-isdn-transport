@@ -34,7 +34,7 @@ import org.neociclo.isdn.CapiFactory;
 public class IsdnClientChannelFactory implements ChannelFactory {
 
     private final CapiFactory capiFactory;
-    private final IsdnPipelineSink sink;
+    private final IsdnClientPipelineSink sink;
 
     private ControllerSelector controllerSelector;
     private IsdnConfigurator configurator;
@@ -65,7 +65,7 @@ public class IsdnClientChannelFactory implements ChannelFactory {
 
         this.workerExecutor = workerExecutor;
         this.capiFactory = capiFactory;
-        this.sink = new IsdnPipelineSink(workerExecutor);
+        this.sink = new IsdnClientPipelineSink(workerExecutor);
         this.configurator = configurator;
 
         if (controllerSelector == null) {
