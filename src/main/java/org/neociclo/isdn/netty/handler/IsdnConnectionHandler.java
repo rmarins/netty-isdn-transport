@@ -111,16 +111,33 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     public static final String NCCI_ACTIVE = "N-ACT";
     
     @State(PLCI_ACTIVE)
-    public static final String WF_DISCONNECT_B3_CONF = "N-4 [WF_CONNECT_B3_CONF]";
+    public static final String WF_DISCONNECT_B3_CONF = "N-4 [WF_DISCONNECT_B3_CONF]";
 
     public IsdnConnectionHandler() {
         super();
     }
 
+    /**
+     * Server mode method used to hold ChannelEvent#CONNECTED to sendUpstream()
+     * on CONNECT_B3_ACTIVE_IND.
+     */
     @Transition(on = CHANNEL_CONNECTED, in = PLCI)
     public void retainChannelConnectedEvent(StateContext stateCtx, ChannelStateEvent e) {
         LOGGER.trace("retainChannelConnectedEvent()");
         stateCtx.setAttribute(ISDN_CONNECTED_EVENT_ATTR, e);
+    }
+
+    /**
+     * Client mode method used to hold ChannelEvent#CONNECT_REQUESTED to sendUpstream()
+     * on CONNECT_B3_ACTIVE_IND.
+     */
+    @Transition(on = CONNECT_REQUESTED, in = PLCI)
+    public void retainConnectRequestedEvent(StateContext stateCtx,ChannelHandlerContext ctx,  ChannelStateEvent e) {
+        LOGGER.trace("retainConnectRequestedEvent()");
+        stateCtx.setAttribute(ISDN_CONNECTED_EVENT_ATTR, e);
+
+        // forward CONNET_REQUESTED to the Sink after event retention 
+        ctx.sendDownstream(e);
     }
 
     // -------------------------------------------------------------------------
@@ -134,9 +151,6 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
 
         CapiMessage connectReq = createConnectRequest(channel);
         channel.write(connectReq);
-
-//        // hold ChannelEvent#CONNECTED to sendUpstream() on CONNECT_ACTIVE_IND
-//        stateCtx.setAttribute(ISDN_CONNECTED_EVENT_ATTR, e);
 
     }
 
@@ -318,6 +332,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
                 stateCtx.setAttribute(ISDN_CONNECTED_EVENT_ATTR, null);
 
                 // mark connectFuture as succesful
+                LOGGER.trace("ncciConnectB3ActiveInd() :: channelConnected event = " + channelConnected);
                 channelConnected.getFuture().setSuccess();
 
                 // set channel connected and raise the ChannelEvent#CONNECTED
@@ -456,7 +471,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     public void unhandledEvent(Event smEvent, ChannelHandlerContext ctx, ChannelEvent channelEvent) throws Exception {
 
         String name = (String) smEvent.getId();
-        LOGGER.warn("UNHANDLED :: on = {} , in = {}, event = {} ", new Object[] { name,
+        LOGGER.trace("UNHANDLED :: on = {} , in = {}, event = {} ", new Object[] { name,
                 getStateContext(ctx).getCurrentState().getId(), channelEvent });
 
         handleEvent(name, ctx, channelEvent);

@@ -27,7 +27,7 @@
   <groupId>org.neociclo.accord.components</groupId>
   <artifactId>accord-isdn-netty</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.0-M2</version>
+  <version>1.0.0-M3</version>
   <name>accord-isdn-netty</name>
   <description>Accord ISDN JBoss Netty handler</description>
 
@@ -122,7 +122,7 @@
     <dependency>
       <groupId>org.jboss.netty</groupId>
       <artifactId>netty</artifactId>
-      <version>3.1.2.GA</version>
+      <version>3.1.5.GA</version>
       <scope>compile</scope>
     </dependency>
 
@@ -133,7 +133,7 @@
     <dependency>
       <groupId>org.apache.mina</groupId>
       <artifactId>mina-statemachine</artifactId>
-      <version>2.0.0-M6</version>
+      <version>2.0.0-RC1</version>
       <scope>compile</scope>
     </dependency>
 
@@ -155,21 +155,21 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.5.5</version>
+      <version>1.5.8</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jcl</artifactId>
-      <version>1.5.2</version>
+      <version>1.5.8</version>
       <scope>runtime</scope>
     </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
-      <version>1.5.5</version>
+      <version>1.5.8</version>
       <scope>runtime</scope>
     </dependency>
 
