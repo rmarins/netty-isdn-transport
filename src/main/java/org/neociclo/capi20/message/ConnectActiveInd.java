@@ -19,6 +19,7 @@
  */
 package org.neociclo.capi20.message;
 
+import static java.lang.String.format;
 import static org.neociclo.capi20.message.MessageType.CONNECT_ACTIVE_IND;
 import static org.neociclo.capi20.parameter.ParameterBuffers.readConnectedNumber;
 import static org.neociclo.capi20.parameter.ParameterBuffers.readConnectedSubAddress;
@@ -88,6 +89,12 @@ public class ConnectActiveInd extends ReceiveMessage {
         setConnectedNumber(readConnectedNumber(buf));
         setConnectedSubAddress(readConnectedSubAddress(buf));
         setLowLayerCompatibility(readLowLayerCompatibility(buf));
+    }
+
+    @Override
+    public String toString() {
+        return format("%s(appID: %d, msgNum: %d, plci: %d)", getClass().getSimpleName(), getAppID(),
+                getMessageID(), getPlci().getPlciValue());
     }
 
 }

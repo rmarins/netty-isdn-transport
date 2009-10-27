@@ -19,6 +19,7 @@
  */
 package org.neociclo.capi20.message;
 
+import static java.lang.String.format;
 import static org.neociclo.capi20.parameter.ParameterBuffers.writePlci;
 import net.sourceforge.jcapi.message.parameter.PLCI;
 
@@ -51,6 +52,12 @@ public class ConnectActiveResp extends SendMessage {
     @Override
     protected void writeValues(ChannelBuffer buf) {
         writePlci(buf, getPlci());
+    }
+
+    @Override
+    public String toString() {
+        return format("%s(appID: %d, msgNum: %d, plci: %d)", getClass().getSimpleName(), getAppID(),
+                getMessageID(), getPlci().getPlciValue());
     }
 
 }

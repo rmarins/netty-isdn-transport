@@ -19,6 +19,7 @@
  */
 package org.neociclo.capi20.message;
 
+import static java.lang.String.format;
 import static org.neociclo.capi20.message.MessageType.*;
 import static org.neociclo.capi20.parameter.ParameterBuffers.*;
 
@@ -80,4 +81,9 @@ public class DisconnectB3Ind extends ReceiveMessage {
         setNcpi(readNcpi(buf, b3, DISCONNECT_B3_IND));
     }
 
+    @Override
+    public String toString() {
+        return format("%s(appID: %d, msgNum: %d, ncci: %d, reason: %s)", getClass().getSimpleName(), getAppID(),
+                getMessageID(), getNcci().getNcciValue(), getReasonB3());
+    }
 }

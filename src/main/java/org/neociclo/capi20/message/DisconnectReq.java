@@ -19,6 +19,7 @@
  */
 package org.neociclo.capi20.message;
 
+import static java.lang.String.format;
 import static org.neociclo.capi20.parameter.ParameterBuffers.writeAdditionalInfo;
 import static org.neociclo.capi20.parameter.ParameterBuffers.writePlci;
 import net.sourceforge.jcapi.message.parameter.AdditionalInfo;
@@ -63,6 +64,12 @@ public class DisconnectReq extends SendMessage {
     protected void writeValues(ChannelBuffer buf) {
         writePlci(buf, getPlci());
         writeAdditionalInfo(buf, getAdditionalInfo());
+    }
+
+    @Override
+    public String toString() {
+        return format("%s(appID: %d, msgNum: %d, plci: %d)", getClass().getSimpleName(), getAppID(),
+                getMessageID(), getPlci().getPlciValue());
     }
 
 }
