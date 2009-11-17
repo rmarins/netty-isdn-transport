@@ -54,6 +54,7 @@ import org.neociclo.capi20.message.DisconnectB3Conf;
 import org.neociclo.capi20.message.DisconnectB3Ind;
 import org.neociclo.capi20.message.DisconnectConf;
 import org.neociclo.capi20.message.DisconnectInd;
+import org.neociclo.capi20.message.ResetB3Ind;
 import org.neociclo.capi20.parameter.Info;
 import org.neociclo.capi20.parameter.Reason;
 import org.neociclo.isdn.netty.channel.IsdnChannel;
@@ -418,7 +419,6 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
         Channels.fireMessageReceived(channel, data);
 
     }
-
     @Transition (on = WRITE_REQUESTED, in = NCCI_ACTIVE)
     public void ncciDataB3Req(IsdnChannel channel, ChannelBuffer message, ChannelHandlerContext ctx, ChannelEvent channelEvent) throws CapiException {
 
@@ -445,6 +445,29 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
         LOGGER.trace("ncciDataB3Conf()");
 
         // TODO process the dataCon.getInfo() accordingly
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Flow control
+    // -------------------------------------------------------------------------
+
+    @Transition(on = MESSAGE_RECEIVED, in = NCCI_ACTIVE, next = WF_DISCONNECT_B3_CONF)
+    public void ncciResetB3Ind(final IsdnChannel channel, ResetB3Ind resetInd) throws CapiException {
+
+        LOGGER.trace("ncciResetB3Ind()");
+
+        CapiMessage resetResp = createResetB3Resp(channel);
+        ChannelFuture resetRespFuture = channel.write(resetResp);
+
+        resetRespFuture.addListener(new ChannelFutureListener() {
+            public void operationComplete(ChannelFuture future) throws Exception {
+                // send a subsequent DISCONNECT_B3_REQ
+                CapiMessage disconnectB3Req = createDisconnectB3Req(channel);
+                channel.write(disconnectB3Req);
+            }
+        });
+
     }
 
     // -------------------------------------------------------------------------

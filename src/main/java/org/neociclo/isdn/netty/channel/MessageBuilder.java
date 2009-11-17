@@ -40,6 +40,8 @@ import org.neociclo.capi20.message.DisconnectInd;
 import org.neociclo.capi20.message.InfoConf;
 import org.neociclo.capi20.message.ListenConf;
 import org.neociclo.capi20.message.MessageType;
+import org.neociclo.capi20.message.ResetB3Conf;
+import org.neociclo.capi20.message.ResetB3Ind;
 import org.neociclo.capi20.parameter.Info;
 
 /**
@@ -91,6 +93,10 @@ public class MessageBuilder {
             return new DisconnectB3Ind(buffer, config.getB3());
         case LISTEN_CONF:
             return new ListenConf(buffer);
+        case RESET_B3_IND:
+            return new ResetB3Ind(buffer, config.getB3());
+        case RESET_B3_CONF:
+            return new ResetB3Conf(buffer);
         }
 
         throw new CapiException(Info.EXCHANGE_ILLEGAL_COMMAND, format(

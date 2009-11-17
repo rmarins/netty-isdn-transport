@@ -46,6 +46,9 @@ import org.neociclo.capi20.message.DisconnectB3Resp;
 import org.neociclo.capi20.message.DisconnectInd;
 import org.neociclo.capi20.message.DisconnectReq;
 import org.neociclo.capi20.message.DisconnectResp;
+import org.neociclo.capi20.message.ResetB3Conf;
+import org.neociclo.capi20.message.ResetB3Req;
+import org.neociclo.capi20.message.ResetB3Resp;
 import org.neociclo.capi20.parameter.Reject;
 import org.neociclo.isdn.netty.channel.IsdnChannel;
 import org.neociclo.isdn.netty.channel.IsdnChannelConfig;
@@ -108,6 +111,35 @@ class IsdnConnectionHelper {
         disconB3Req.setNcpi(ncpi);
 
         return disconB3Req;
+
+    }
+
+    public static ResetB3Req createResetB3Req(IsdnChannel channel) throws CapiException {
+        
+        IsdnChannelConfig config = channel.getConfig();
+
+        int b3Protocol = b3Protocol(config.getB3());
+        NCPI ncpi = createNcpi(channel, b3Protocol, RESET_B3_REQ);
+
+        ResetB3Req reset = new ResetB3Req();
+        reset.setNcci(config.getNcci());
+        reset.setNcpi(ncpi);
+
+        return reset;
+
+    }
+
+    public static ResetB3Resp createResetB3Resp(IsdnChannel channel) throws CapiException {
+        
+        IsdnChannelConfig config = channel.getConfig();
+
+        int b3Protocol = b3Protocol(config.getB3());
+        NCPI ncpi = createNcpi(channel, b3Protocol, RESET_B3_REQ);
+
+        ResetB3Resp resp = new ResetB3Resp();
+        resp.setNcci(config.getNcci());
+
+        return resp;
 
     }
 
