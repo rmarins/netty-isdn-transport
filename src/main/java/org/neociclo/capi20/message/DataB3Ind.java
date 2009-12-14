@@ -19,12 +19,14 @@
  */
 package org.neociclo.capi20.message;
 
+import static java.lang.String.format;
 import static org.neociclo.capi20.util.CapiBuffers.*;
 import static org.neociclo.capi20.util.Bits.*;
 import static org.neociclo.capi20.message.MessageType.*;
 import static org.neociclo.capi20.parameter.ParameterBuffers.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import net.sourceforge.jcapi.message.parameter.NCCI;
 
@@ -117,6 +119,12 @@ public class DataB3Ind extends ReceiveMessage {
         byte[] data = new byte[dataLength];
         buf.readBytes(data);
         setB3Data(data);
+    }
+
+    @Override
+    public String toString() {
+        return format("%s(appID: %d, msgNum: %d, ncci: %d, handle: %d, length: %d, flags: %s)", getClass().getSimpleName(), getAppID(),
+                getMessageID(), getNcci().getNcciValue(), getDataHandle(), getDataLength(), Arrays.toString(getFlags()));
     }
 
 }

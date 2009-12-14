@@ -55,6 +55,7 @@ import org.neociclo.capi20.message.DisconnectB3Ind;
 import org.neociclo.capi20.message.DisconnectConf;
 import org.neociclo.capi20.message.DisconnectInd;
 import org.neociclo.capi20.message.ResetB3Ind;
+import org.neociclo.capi20.parameter.Flag;
 import org.neociclo.capi20.parameter.Info;
 import org.neociclo.capi20.parameter.Reason;
 import org.neociclo.isdn.netty.channel.IsdnChannel;
@@ -73,6 +74,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
 
     public static final String ISDN_CONNECTED_EVENT_ATTR = "Isdn.connectFuture";
     public static final String ISDN_CLOSE_REQUESTED_EVENT_ATTR = "Isdn.closeRequestedEvent";
+    public static final String ISDN_RECEIVE_BUF_ATTR = "Isdn.receiveBuffer";
     
     /** General state of the protocol handler; the state it is initialized. */
     @State
@@ -257,8 +259,10 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
         // forward the ChannelEvent#CLOSE_REQUESTED caught on
         // ncciDisconnectB3Req() to down layers with sendDownstream()
         ChannelStateEvent closeRequested = (ChannelStateEvent) stateCtx.getAttribute(ISDN_CLOSE_REQUESTED_EVENT_ATTR);
-        stateCtx.setAttribute(ISDN_CLOSE_REQUESTED_EVENT_ATTR, null);
-        ctx.sendDownstream(closeRequested);
+        if (closeRequested != null) {
+            stateCtx.setAttribute(ISDN_CLOSE_REQUESTED_EVENT_ATTR, null);
+            ctx.sendDownstream(closeRequested);
+        }
 
     }
 
@@ -403,7 +407,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     // -------------------------------------------------------------------------
 
     @Transition(on = MESSAGE_RECEIVED, in = NCCI_ACTIVE)
-    public void ncciDataB3Ind(IsdnChannel channel, DataB3Ind dataInd, ChannelHandlerContext ctx) throws CapiException {
+    public void ncciDataB3Ind(IsdnChannel channel, StateContext stateCtx, DataB3Ind dataInd, ChannelHandlerContext ctx) throws CapiException {
 
         try {
             LOGGER.trace("ncciDataB3Ind() :: data = {}", new String(dataInd.getB3Data(), "US-ASCII"));
@@ -414,9 +418,25 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
         CapiMessage dataResp = replyDataB3Resp(dataInd);
         channel.write(dataResp);
 
-        // TODO send the complete DATA (more-data bit checked) to upper layer
+        ChannelBuffer buf = (ChannelBuffer) stateCtx.getAttribute(ISDN_RECEIVE_BUF_ATTR);
+        if (buf == null) {
+            buf = ChannelBuffers.dynamicBuffer();
+        }
+
+        // handle the more-data bit check
         ChannelBuffer data = wrappedBuffer(dataInd.getB3Data());
-        Channels.fireMessageReceived(channel, data);
+        buf.writeBytes(data);
+
+        if (dataInd.hasFlag(Flag.MORE_DATA_BIT)) {
+            // accumulate buffer on session state context
+            LOGGER.trace("ncciDataB3Ind() :: accumulating data buffer... {}", dataInd);
+            stateCtx.setAttribute(ISDN_RECEIVE_BUF_ATTR, buf);
+        } else {
+            // send the complete DATA to upper layer
+            Channels.fireMessageReceived(channel, buf);
+            stateCtx.setAttribute(ISDN_RECEIVE_BUF_ATTR, null);
+        }
+
 
     }
     @Transition (on = WRITE_REQUESTED, in = NCCI_ACTIVE)
@@ -452,7 +472,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     // Flow control
     // -------------------------------------------------------------------------
 
-    @Transition(on = MESSAGE_RECEIVED, in = NCCI_ACTIVE, next = WF_DISCONNECT_B3_CONF)
+    @Transition(on = MESSAGE_RECEIVED, in = NCCI_ACTIVE) //, next = WF_DISCONNECT_B3_CONF)
     public void ncciResetB3Ind(final IsdnChannel channel, ResetB3Ind resetInd) throws CapiException {
 
         LOGGER.trace("ncciResetB3Ind()");
@@ -460,13 +480,13 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
         CapiMessage resetResp = createResetB3Resp(channel);
         ChannelFuture resetRespFuture = channel.write(resetResp);
 
-        resetRespFuture.addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                // send a subsequent DISCONNECT_B3_REQ
-                CapiMessage disconnectB3Req = createDisconnectB3Req(channel);
-                channel.write(disconnectB3Req);
-            }
-        });
+//        resetRespFuture.addListener(new ChannelFutureListener() {
+//            public void operationComplete(ChannelFuture future) throws Exception {
+//                // send a subsequent DISCONNECT_B3_REQ
+//                CapiMessage disconnectB3Req = createDisconnectB3Req(channel);
+//                channel.write(disconnectB3Req);
+//            }
+//        });
 
     }
 
