@@ -44,7 +44,7 @@ import org.jboss.netty.channel.ChannelState;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.util.ThreadRenamingRunnable;
-import org.jboss.netty.util.internal.IoWorkerRunnable;
+import org.jboss.netty.util.internal.DeadLockProofWorker;
 import org.neociclo.capi20.CapiException;
 import org.neociclo.capi20.message.ConnectInd;
 import org.neociclo.capi20.message.CapiMessage;
@@ -179,14 +179,13 @@ final class IsdnServerPipelineSink extends AbstractChannelSink {
             fireChannelBound(channel, localAddress);
 
             Executor bossExecutor = ((IsdnServerChannelFactory) channel.getFactory()).bossExecutor();
-            bossExecutor.execute(
-                    new IoWorkerRunnable(
-                            new ThreadRenamingRunnable(
-                                    new Boss(channel, appId),
-                                    format(
-                                            "Isdn server boss (channelId: %d, %s)",
-                                            channel.getId(),
-                                            localAddress))));
+            DeadLockProofWorker.start(
+            		bossExecutor,
+                    new ThreadRenamingRunnable(
+		                    new Boss(channel, appId),
+		                    format("Isdn server boss (channelId: %d, %s)",
+		                            channel.getId(),
+		                            localAddress)));
 
             bossStarted = true;
 
@@ -299,15 +298,15 @@ final class IsdnServerPipelineSink extends AbstractChannelSink {
                             continue;
                         }
 
-                        workerExecutor.execute(
-                                new IoWorkerRunnable(
-                                        new ThreadRenamingRunnable(
-                                                acceptedChannel.worker,
-                                                format("Isdn server worker (parentId: %d, channelId: %d, %s => %s)",
-                                                        channel.getId(),
-                                                        acceptedChannel.getId(),
-                                                        acceptedChannel.getCallingAddress(),
-                                                        acceptedChannel.getCalledAddress()))));
+                        DeadLockProofWorker.start(
+                        		workerExecutor,
+                                new ThreadRenamingRunnable(
+                                        acceptedChannel.worker,
+                                        format("Isdn server worker (parentId: %d, channelId: %d, %s => %s)",
+                                                channel.getId(),
+                                                acceptedChannel.getId(),
+                                                acceptedChannel.getCallingAddress(),
+                                                acceptedChannel.getCalledAddress())));
                         
 
                     } else {

@@ -19,8 +19,11 @@
  */
 package org.neociclo.isdn.netty.channel;
 
-import static java.lang.Boolean.*;
-import static org.jboss.netty.channel.Channels.*;
+import static java.lang.Boolean.FALSE;
+import static org.jboss.netty.channel.Channels.fireChannelBound;
+import static org.jboss.netty.channel.Channels.fireChannelConnected;
+import static org.jboss.netty.channel.Channels.fireExceptionCaught;
+import static org.jboss.netty.channel.Channels.succeededFuture;
 
 import java.util.concurrent.Executor;
 
@@ -33,7 +36,7 @@ import org.jboss.netty.channel.ChannelState;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.util.ThreadRenamingRunnable;
-import org.jboss.netty.util.internal.IoWorkerRunnable;
+import org.jboss.netty.util.internal.DeadLockProofWorker;
 import org.neociclo.isdn.IsdnSocketAddress;
 
 /**
@@ -137,15 +140,15 @@ class IsdnClientPipelineSink extends AbstractChannelSink {
 
             // start IsdnWorker handle CAPI operations
             channel.setWorker(new IsdnWorker(channel, port));
-            workerExecutor.execute(
-                    new IoWorkerRunnable(
-                            new ThreadRenamingRunnable(
-                                    channel.worker(),
-                                    String.format("CLIENT IsdnWorker(appId 0x%04X): id %s, %s => %s",
-                                            port,
-                                            channel.getId(),
-                                            channel.getLocalAddress(),
-                                            channel.getRemoteAddress()))));
+            DeadLockProofWorker.start(
+            		workerExecutor,
+                    new ThreadRenamingRunnable(
+                            channel.worker(),
+                            String.format("CLIENT IsdnWorker(appId 0x%04X): id %s, %s => %s",
+                                    port,
+                                    channel.getId(),
+                                    channel.getLocalAddress(),
+                                    channel.getRemoteAddress())));
 
             workerStarted = true;
 
