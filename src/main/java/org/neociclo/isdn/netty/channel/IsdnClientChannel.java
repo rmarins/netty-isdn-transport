@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import org.jboss.netty.channel.AbstractChannel;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.handler.logging.LoggingHandler;
+import org.jboss.netty.logging.InternalLogLevel;
 import org.neociclo.capi20.Capi;
 import org.neociclo.capi20.Controller;
 import org.neociclo.capi20.SimpleCapi;

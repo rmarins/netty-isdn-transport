@@ -30,11 +30,11 @@ import java.util.concurrent.BlockingQueue;
 
 import net.sourceforge.jcapi.rcapi.message.parameter.UserData;
 
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.neociclo.capi20.CapiException;
@@ -55,7 +55,7 @@ class ApplicationController {
 
     private static final int CONTROL_APP_ID = 0xffff;
 
-    @ChannelPipelineCoverage("all")
+    @Sharable
     public class ApplicationHandler extends SimpleChannelHandler {
 
         private BlockingQueue<ControlMessage> incoming = new ArrayBlockingQueue<ControlMessage>(2);
