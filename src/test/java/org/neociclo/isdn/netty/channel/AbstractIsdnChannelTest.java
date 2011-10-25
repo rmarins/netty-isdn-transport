@@ -226,7 +226,7 @@ public abstract class AbstractIsdnChannelTest {
     protected void stepGetProfile() throws Exception {
 
         // CAPI_GET_PROFILE: configure mock with one controller-only CAPI
-        expect(simpleCapi().getNumberOfControllers()).andReturn(1).anyTimes();
+//        expect(simpleCapi().getNumberOfControllers()).andReturn(1).anyTimes();
         expect(mock().getProfile(eq(1))).andReturn(GET_PROFILE_CONF_CONTROLLER_ONE).anyTimes();
 
     }

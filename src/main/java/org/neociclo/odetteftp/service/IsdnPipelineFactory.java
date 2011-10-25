@@ -21,8 +21,11 @@ package org.neociclo.odetteftp.service;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 
+import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.util.Timer;
 import org.neociclo.odetteftp.EntityType;
@@ -67,7 +70,41 @@ public class IsdnPipelineFactory implements ChannelPipelineFactory {
 
         final ChannelPipeline p = pipeline();
 
-        // add odette-ftp exchange buffer codecs
+        p.addLast("oftpPipelineSetupWhenConnected", new SimpleChannelHandler() {
+        	@Override
+        	public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        		keepChannelOpenEvent(ctx, e);
+        	    super.channelOpen(ctx, e);
+        	}
+			@Override
+        	public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+                configureOdetteFtpHandler(p);
+                p.remove("oftpPipelineSetupWhenConnected");
+
+                ChannelStateEvent channelOpenEvent = restoreChannelOpenEvent(ctx);
+                super.channelOpen(ctx, channelOpenEvent);
+                channelOpenEvent = null;
+
+                super.channelConnected(ctx, e);
+            }
+        });
+
+		return p;
+	}
+
+	private void keepChannelOpenEvent(ChannelHandlerContext ctx, ChannelStateEvent e) {
+		ctx.setAttachment(e);
+    }
+
+	private ChannelStateEvent restoreChannelOpenEvent(ChannelHandlerContext ctx) {
+		ChannelStateEvent e = (ChannelStateEvent) ctx.getAttachment();
+		ctx.setAttachment(null);
+        return e;
+    }
+
+    private void configureOdetteFtpHandler(ChannelPipeline p) {
+
+    	// add odette-ftp exchange buffer codecs
         // XXX non-STB nor -MBGW decoder may require a Oftp decoder specialized from FrameDecoder
         p.addLast("OdetteExchangeBuffer-DECODER", new OdetteFtpDecoder());
         p.addLast("OdetteExchangeBuffer-ENCODER", new OdetteFtpEncoder());
@@ -82,9 +119,8 @@ public class IsdnPipelineFactory implements ChannelPipelineFactory {
         p.addLast("OdetteFtp-HANDLER", new OdetteFtpChannelHandler(entityType, factory, timer, channelGroup));
 		LOGGER.debug("Added Odette FTP handler to channel pipeline (oftpletFactory={}, timer={}, channelGroup={}).",
 		        new Object[] { factory, timer, channelGroup });
-
-		return p;
-	}
+	    
+    }
 
 	public void disableLogging() {
 		this.loggingEnabled = false;

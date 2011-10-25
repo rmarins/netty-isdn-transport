@@ -38,7 +38,7 @@ public class SimpleCapi implements Capi {
     public static final int DEFAULT_MAX_BDATA_LEN = 1024;
 
     /** CAPI implementation specific controller identification. */
-    private static final int CAPI_IMPL_CONTROLLER = 0x0000;
+    private static final int CAPI_IMPL_CONTROLLER = 0x0001;
 
     private static final int ONE_KB = 1024;
 

@@ -26,6 +26,7 @@ import static org.jboss.netty.buffer.ChannelBuffers.*;
 import static org.neociclo.capi20.parameter.Reject.*;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 
 import org.apache.mina.statemachine.annotation.State;
 import org.apache.mina.statemachine.annotation.Transition;
@@ -70,12 +71,14 @@ import org.slf4j.LoggerFactory;
  */
 public class IsdnConnectionHandler extends SimpleStateMachineHandler {
 
+	private static final Charset US_ASCII_CHARSET = Charset.forName("US-ASCII");
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IsdnConnectionHandler.class);
 
     public static final String ISDN_CONNECTED_EVENT_ATTR = "Isdn.connectFuture";
     public static final String ISDN_CLOSE_REQUESTED_EVENT_ATTR = "Isdn.closeRequestedEvent";
     public static final String ISDN_RECEIVE_BUF_ATTR = "Isdn.receiveBuffer";
-    
+
     /** General state of the protocol handler; the state it is initialized. */
     @State
     public static final String PLCI = "GENERAL";
@@ -338,11 +341,11 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
 
                 // mark connectFuture as succesful
                 LOGGER.trace("ncciConnectB3ActiveInd() :: channelConnected event = " + channelConnected);
+                channel.setConnected();
                 channelConnected.getFuture().setSuccess();
 
                 // set channel connected and raise the ChannelEvent#CONNECTED
                 // caught on CHANNEL_CONNECTED with sendUpstream()
-                channel.setConnected();
                 ctx.sendUpstream(channelConnected);
 
             }
@@ -450,7 +453,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
         }
         
         try {
-            LOGGER.trace("ncciDataB3Req() :: data = {}", message.duplicate().toString("US-ASCII"));
+            LOGGER.trace("ncciDataB3Req() :: data = {}", message.duplicate().toString(US_ASCII_CHARSET));
         } catch (Throwable t) {
             LOGGER.trace("ncciDataB3Req()");
         }

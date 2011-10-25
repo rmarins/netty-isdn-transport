@@ -29,6 +29,15 @@ import org.neociclo.isdn.CapiFactory;
  */
 public class MockCapiFactory implements CapiFactory {
 
+    private static SimpleCapi createSimpleCapi(Capi mock) {
+    	return new SimpleCapi(mock) {
+        	@Override
+        	public int getNumberOfControllers() throws CapiException {
+        	    return 1;
+        	}
+        };
+    }
+
     private final Capi mock;
 
     private final SimpleCapi simpleCapi;
@@ -36,11 +45,11 @@ public class MockCapiFactory implements CapiFactory {
     public MockCapiFactory(boolean threadSafe) {
         super();
         this.mock = createMock(Capi.class);
-        this.simpleCapi = new SimpleCapi(mock);
+        this.simpleCapi = createSimpleCapi(mock);
         makeThreadSafe(mock, threadSafe);
     }
 
-    public Capi getCapi() {
+	public Capi getCapi() {
         return mock;
     }
 
