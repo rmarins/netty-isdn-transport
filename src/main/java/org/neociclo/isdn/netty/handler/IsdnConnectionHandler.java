@@ -412,11 +412,13 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     @Transition(on = MESSAGE_RECEIVED, in = NCCI_ACTIVE)
     public void ncciDataB3Ind(IsdnChannel channel, StateContext stateCtx, DataB3Ind dataInd, ChannelHandlerContext ctx) throws CapiException {
 
-        try {
-            LOGGER.trace("ncciDataB3Ind() :: data = {}", new String(dataInd.getB3Data(), "US-ASCII"));
-        } catch (UnsupportedEncodingException e) {
-            LOGGER.trace("ncciDataB3Ind()");
-        }
+    	if (LOGGER.isTraceEnabled()) {
+	        try {
+	            LOGGER.trace("ncciDataB3Ind() :: data = {}", new String(dataInd.getB3Data(), US_ASCII_CHARSET));
+	        } catch (Throwable t) {
+	            LOGGER.trace("ncciDataB3Ind()");
+	        }
+    	}
 
         CapiMessage dataResp = replyDataB3Resp(dataInd);
         channel.write(dataResp);
@@ -432,7 +434,9 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
 
         if (dataInd.hasFlag(Flag.MORE_DATA_BIT)) {
             // accumulate buffer on session state context
-            LOGGER.trace("ncciDataB3Ind() :: accumulating data buffer... {}", dataInd);
+        	if (LOGGER.isTraceEnabled()) {
+	            LOGGER.trace("ncciDataB3Ind() :: accumulating data buffer... {}", dataInd);
+        	}
             stateCtx.setAttribute(ISDN_RECEIVE_BUF_ATTR, buf);
         } else {
             // send the complete DATA to upper layer
@@ -451,11 +455,13 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
             handleEvent(WRITE_REQUESTED, ctx, channelEvent);
             return;
         }
-        
-        try {
-            LOGGER.trace("ncciDataB3Req() :: data = {}", message.duplicate().toString(US_ASCII_CHARSET));
-        } catch (Throwable t) {
-            LOGGER.trace("ncciDataB3Req()");
+
+        if (LOGGER.isTraceEnabled()) {
+	        try {
+	            LOGGER.trace("ncciDataB3Req() :: data = {}", message.duplicate().toString(US_ASCII_CHARSET));
+	        } catch (Throwable t) {
+	            LOGGER.trace("ncciDataB3Req()");
+	        }
         }
 
         CapiMessage dataReq = createDataB3Req(channel, message);
