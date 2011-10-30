@@ -61,4 +61,16 @@ public class IsdnSocketAddress extends SocketAddress {
     public String toString() {
         return getNumber() + (getSubAddress() == null ? "" : ':' + getSubAddress());
     }
+
+	/**
+     * @param msn
+     * @return
+     */
+    public static IsdnSocketAddress valueOf(String msn) {
+    	if (msn == null) {
+    		return null;
+    	} else {
+    		return new IsdnSocketAddress(msn);
+    	}
+    }
 }

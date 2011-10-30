@@ -105,7 +105,6 @@ public class IsdnPipelineFactory implements ChannelPipelineFactory {
     private void configureOdetteFtpHandler(ChannelPipeline p) {
 
     	// add odette-ftp exchange buffer codecs
-        // XXX non-STB nor -MBGW decoder may require a Oftp decoder specialized from FrameDecoder
         p.addLast("OdetteExchangeBuffer-DECODER", new OdetteFtpDecoder());
         p.addLast("OdetteExchangeBuffer-ENCODER", new OdetteFtpEncoder());
         LOGGER.debug("Added Odette Exchange Buffer codecs to channel pipeline.");
@@ -119,7 +118,7 @@ public class IsdnPipelineFactory implements ChannelPipelineFactory {
         p.addLast("OdetteFtp-HANDLER", new OdetteFtpChannelHandler(entityType, factory, timer, channelGroup));
 		LOGGER.debug("Added Odette FTP handler to channel pipeline (oftpletFactory={}, timer={}, channelGroup={}).",
 		        new Object[] { factory, timer, channelGroup });
-	    
+
     }
 
 	public void disableLogging() {
