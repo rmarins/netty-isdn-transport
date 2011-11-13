@@ -25,7 +25,6 @@ import static org.neociclo.isdn.netty.handler.IsdnConnectionHelper.*;
 import static org.jboss.netty.buffer.ChannelBuffers.*;
 import static org.neociclo.capi20.parameter.Reject.*;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 import org.apache.mina.statemachine.annotation.State;
@@ -40,7 +39,6 @@ import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.neociclo.capi20.CapiException;
 import org.neociclo.capi20.message.CapiMessage;
@@ -410,7 +408,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     // -------------------------------------------------------------------------
 
     @Transition(on = MESSAGE_RECEIVED, in = NCCI_ACTIVE)
-    public void ncciDataB3Ind(IsdnChannel channel, StateContext stateCtx, DataB3Ind dataInd, ChannelHandlerContext ctx) throws CapiException {
+    public void ncciDataB3Ind(IsdnChannel channel, StateContext stateCtx, DataB3Ind dataInd, ChannelHandlerContext ctx, ChannelEvent channelEvent) throws CapiException {
 
     	if (LOGGER.isTraceEnabled()) {
 	        try {
@@ -421,7 +419,8 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     	}
 
         CapiMessage dataResp = replyDataB3Resp(dataInd);
-        channel.write(dataResp);
+//        channel.write(dataResp);
+        write(ctx, channelEvent.getFuture(), dataResp);
 
         ChannelBuffer buf = (ChannelBuffer) stateCtx.getAttribute(ISDN_RECEIVE_BUF_ATTR);
         if (buf == null) {
@@ -440,7 +439,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
             stateCtx.setAttribute(ISDN_RECEIVE_BUF_ATTR, buf);
         } else {
             // send the complete DATA to upper layer
-            Channels.fireMessageReceived(channel, buf);
+            fireMessageReceived(channel, buf);
             stateCtx.setAttribute(ISDN_RECEIVE_BUF_ATTR, null);
         }
 
@@ -465,7 +464,9 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
         }
 
         CapiMessage dataReq = createDataB3Req(channel, message);
-        channel.write(dataReq);
+//        channel.write(dataReq);
+        write(ctx, channelEvent.getFuture(), dataReq);
+        
     }
 
     @Transition(on = MESSAGE_RECEIVED, in = NCCI_ACTIVE)

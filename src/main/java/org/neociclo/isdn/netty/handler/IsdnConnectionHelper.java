@@ -46,7 +46,6 @@ import org.neociclo.capi20.message.DisconnectB3Resp;
 import org.neociclo.capi20.message.DisconnectInd;
 import org.neociclo.capi20.message.DisconnectReq;
 import org.neociclo.capi20.message.DisconnectResp;
-import org.neociclo.capi20.message.ResetB3Conf;
 import org.neociclo.capi20.message.ResetB3Req;
 import org.neociclo.capi20.message.ResetB3Resp;
 import org.neociclo.capi20.parameter.Reject;

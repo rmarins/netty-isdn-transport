@@ -126,12 +126,12 @@ class IsdnWorker implements Runnable {
             LOGGER.trace("Capi.putMessage() :: {}", a);
 
             channel.capi().simplePutMessage(channel.worker().appID, a.getBuffer());
+            future.setSuccess();
 
             // bytesWritten = general message format length + b3 data length
             int bytesWritten = a.getTotalLength();
 
             fireWriteComplete(channel, bytesWritten);
-            future.setSuccess();
 
         } catch (Throwable t) {
             // convert any possible error of class 0x11xx concerning message

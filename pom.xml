@@ -31,7 +31,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.neociclo.accord.components</groupId>
-  <artifactId>jaico</artifactId>
+  <artifactId>accord-isdn-netty</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>Accord Components :: Jaico</name>
@@ -43,6 +43,22 @@
     <url>http://www.neociclo.org/forge/accord/browser/components/${artifactId}/trunk</url>
     <tag>HEAD</tag>
   </scm>
+
+  <build>
+    <plugins>
+      <!--  this create jar file of code from src/test/java so modules with tests can share code -->
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
   <dependencies>
     <dependency>
