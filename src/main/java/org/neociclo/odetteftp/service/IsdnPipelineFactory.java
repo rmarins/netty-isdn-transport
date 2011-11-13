@@ -110,7 +110,7 @@ public class IsdnPipelineFactory implements ChannelPipelineFactory {
         LOGGER.debug("Added Odette Exchange Buffer codecs to channel pipeline.");
 
         if (isLoggingEnabled()) {
-	        p.addLast("logging", new ProtocolLoggingHandler());
+	        p.addLast("OdetteFtp-LOGGING", new ProtocolLoggingHandler());
 	        LOGGER.debug("Added Odette FTP protocol logging handler to channel pipeline.");
         }
 

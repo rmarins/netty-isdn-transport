@@ -55,22 +55,22 @@ public class IsdnExternalSendFilesTest extends AbstractIsdnClientExternal {
             return;
         }
 
-        VirtualFile fileToSend = createVirtualFile(getResourceFile("data/BR0307108.REM"));
+        VirtualFile fileToSend = createVirtualFile(getResourceFile("data/TEST"));
 
         sendFileTest(null, false, false, 256, 64, fileToSend);
     }
 
-    @Test
-    public void testSendingFileWithBufferCompression() throws Exception {
-
-        if (!runTests) {
-            return;
-        }
-
-        VirtualFile fileToSend = createVirtualFile(getResourceFile("data/AGPLV3"));
-
-        sendFileTest(null, true, false, 4096, 64, fileToSend);
-    }
+//    @Test
+//    public void testSendingFileWithBufferCompression() throws Exception {
+//
+//        if (!runTests) {
+//            return;
+//        }
+//
+//        VirtualFile fileToSend = createVirtualFile(getResourceFile("data/AGPLV3"));
+//
+//        sendFileTest(null, true, false, 4096, 64, fileToSend);
+//    }
 
     protected void sendFileTest(OdetteFtpVersion restrictToVersion, boolean compression, boolean restart, int debSize, int cred, VirtualFile fileToSend) throws Exception {
 

@@ -22,6 +22,7 @@ package org.neociclo.odetteftp.service;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.neociclo.odetteftp.OdetteFtpVersion;
 import org.neociclo.odetteftp.TransferMode;
 import org.neociclo.odetteftp.support.OdetteFtpConfiguration;
 
@@ -34,7 +35,9 @@ public class IsdnExternalConnectionTest extends AbstractIsdnClientExternal {
     @Override
     protected OdetteFtpConfiguration createSessionConfig() {
     	OdetteFtpConfiguration c = new OdetteFtpConfiguration();
+    	c.setVersion(OdetteFtpVersion.OFTP_V14);
         c.setTransferMode(TransferMode.SENDER_ONLY);
+//        c.setHasSpecialLogic(true);
         return c;
     }
 
