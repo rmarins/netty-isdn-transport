@@ -132,7 +132,7 @@ public class IsdnClient extends Client {
     @Override
     protected void releaseExternalResources() {
     	if (isManaged(workerExecutor)) {
-    		ExecutorUtil.terminate(DEFAULT_EXECUTOR_SHUTDOWN_TIMEOUT, workerExecutor);
+    		ExecutorUtil.terminate(workerExecutor);
     	}
     	super.releaseExternalResources();
     }
