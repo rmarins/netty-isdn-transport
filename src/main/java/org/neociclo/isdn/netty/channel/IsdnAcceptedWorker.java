@@ -109,8 +109,15 @@ class IsdnAcceptedWorker implements Runnable {
 
     }
 
-    public static void close(IsdnAcceptedChannel channel2, ChannelFuture succeededFuture) {
-        logger.warn("close() not yet implemented");
+    public static void close(IsdnAcceptedChannel channel, ChannelFuture closeFuture) {
+
+    	logger.trace("close() invoked on IsdnAcceptedChannel: {}", channel);
+
+        fireChannelDisconnected(channel);
+        fireChannelUnbound(channel);
+        fireChannelClosed(channel);
+        closeFuture.setSuccess();
+
     }
 
     public static void write(IsdnAcceptedChannel channel, ChannelFuture future, Object message, AtomicInteger messageCounter) {

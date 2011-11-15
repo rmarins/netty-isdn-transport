@@ -263,6 +263,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
         if (closeRequested != null) {
             stateCtx.setAttribute(ISDN_CLOSE_REQUESTED_EVENT_ATTR, null);
             ctx.sendDownstream(closeRequested);
+
         }
 
     }
