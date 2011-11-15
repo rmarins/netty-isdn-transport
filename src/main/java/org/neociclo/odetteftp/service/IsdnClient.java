@@ -32,7 +32,9 @@ import org.neociclo.isdn.netty.channel.ControllerSelector;
 import org.neociclo.isdn.netty.channel.IsdnClientChannelFactory;
 import org.neociclo.isdn.netty.channel.IsdnConfigurator;
 import org.neociclo.odetteftp.EntityType;
+import org.neociclo.odetteftp.TransportType;
 import org.neociclo.odetteftp.oftplet.OftpletFactory;
+import org.neociclo.odetteftp.util.ExecutorUtil;
 
 /**
  * @author Rafael Marins
@@ -125,6 +127,18 @@ public class IsdnClient extends Client {
 
 	public void setControllerSelector(ControllerSelector controllerSelector) {
 		this.controllerSelector = controllerSelector;
+	}
+
+    @Override
+    protected void releaseExternalResources() {
+    	if (isManaged(workerExecutor)) {
+    		ExecutorUtil.terminate(DEFAULT_EXECUTOR_SHUTDOWN_TIMEOUT, workerExecutor);
+    	}
+    	super.releaseExternalResources();
+    }
+
+	protected TransportType getTransportType() {
+		return TransportType.ISDN_CAPI20;
 	}
 
 }
