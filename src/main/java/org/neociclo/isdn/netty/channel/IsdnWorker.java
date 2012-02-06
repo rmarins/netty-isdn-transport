@@ -39,6 +39,7 @@ import org.neociclo.capi20.message.CapiMessage;
 import org.neociclo.capi20.message.ListenConf;
 import org.neociclo.capi20.message.ListenReq;
 import org.neociclo.capi20.parameter.Info;
+import org.neociclo.capi20.parameter.InformationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -333,14 +334,7 @@ class IsdnWorker implements Runnable {
                 channel.capi().waitForSignal(appID);
                 LOGGER.trace("Capi.waitForSignal() :: released!");
                 
-//                // retrieve message from CAPI queue
-//                for (int i=0; i<3; i++) {
-//                    LOGGER.trace("Capi.getMessage() :: {}", i);
-                    message = getMessage();
-//                    if (message != null) {
-//                        break;
-//                    }
-//                }
+                message = getMessage();
 
             } catch (CapiException e) {
 

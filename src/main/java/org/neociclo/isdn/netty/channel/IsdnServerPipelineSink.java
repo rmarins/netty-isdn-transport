@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.sourceforge.jcapi.message.parameter.ConnectedNumber;
+import net.sourceforge.jcapi.message.parameter.ConnectedSubAddress;
 import net.sourceforge.jcapi.message.parameter.NCCI;
 import net.sourceforge.jcapi.message.parameter.PLCI;
 
@@ -50,6 +52,7 @@ import org.neociclo.capi20.message.ConnectInd;
 import org.neociclo.capi20.message.CapiMessage;
 import org.neociclo.capi20.message.ConnectResp;
 import org.neociclo.capi20.message.DisconnectReq;
+import org.neociclo.capi20.message.ResetB3Ind;
 import org.neociclo.isdn.IsdnSocketAddress;
 import org.neociclo.capi20.message.MessageType;
 import org.slf4j.Logger;
@@ -269,6 +272,8 @@ final class IsdnServerPipelineSink extends AbstractChannelSink {
 
                     // TODO check if plci is null
 
+                    // TODO handle the RESET_B3_IND
+
                     MessageType type = message.getType();
                     if (type == CONNECT_IND) {
 
@@ -311,18 +316,26 @@ final class IsdnServerPipelineSink extends AbstractChannelSink {
 
                     } else {
 
-                        // usual incoming message
-                        PlciConnectionHandler ph = plciHandlers.get(plci);
 
-                        if (ph != null ) {
-                            // enqueue the message onto proper PLCI handler
-                            ph.offerReceived(message);
-                        } else if (type == DISCONNECT_CONF) {
-                            // ignore/discard
+                        if (type == RESET_B3_IND || type == RESET_B3_CONF) {
+                        	for (PlciConnectionHandler stepPh: plciHandlers.values()) {
+                        		stepPh.offerReceived(message);
+                        	}
                         } else {
-                            // cannot dispatch the received message to proper channel
-                            // through the PLCI connection handler
-                            throw new CapiException(EXCHANGE_RESOURCE_ERROR, "No PLCI connection handler.");
+	                        // usual incoming message
+	                        PlciConnectionHandler ph = plciHandlers.get(plci);
+	
+	                        if (ph != null ) {
+	                            // enqueue the message onto proper PLCI handler
+	                            ph.offerReceived(message);
+	                        } else if (type == DISCONNECT_CONF) {
+	                            // ignore/discard
+	                        } else {
+	                            // cannot dispatch the received message to proper channel
+	                            // through the PLCI connection handler
+	                            throw new CapiException(EXCHANGE_RESOURCE_ERROR,
+	                            		"Incorrect message. No PLCI connection handler.");
+	                        }
                         }
 
                     }
@@ -349,14 +362,14 @@ final class IsdnServerPipelineSink extends AbstractChannelSink {
         IsdnAcceptedChannel accepted = new IsdnAcceptedChannel(channel, channel.getFactory(), pipeline, this,
                 callingAddress, calledAddress, ph);
 
+        // cache the plciHandler
+        plciHandlers.put(plci, ph);
+
         // reply with connect resp
         ConnectResp resp = replyConnectResp(channel, connectInd);
         resp.setAppID(connectInd.getAppID());
         resp.setMessageID(connectInd.getMessageID());
         IsdnWorker.write(channel, future(channel), resp);
-
-        // cache the plciHandler
-        plciHandlers.put(plci, ph);
 
         return accepted;
     }
@@ -371,6 +384,12 @@ final class IsdnServerPipelineSink extends AbstractChannelSink {
         resp.setBProtocol(bProtocol(config));
         resp.setLowLayerCompatibility(ind.getLowLayerCompatibility());
         resp.setAdditionalInfo(ind.getAdditionalInfo());
+        if (ind.getCalledPartyNumber() != null) {
+        	resp.setConnectedPartyNumber(new ConnectedNumber(ind.getCalledPartyNumber().getBytes()));
+        }
+        if (ind.getCalledPartySubAddress() != null) {
+        	resp.setConnectedPartySubAddress(new ConnectedSubAddress(ind.getCalledPartySubAddress().getBytes()));
+        }
 
         return resp;
     }

@@ -46,6 +46,7 @@ import org.neociclo.capi20.message.ConnectActiveInd;
 import org.neociclo.capi20.message.ConnectB3ActiveInd;
 import org.neociclo.capi20.message.ConnectB3Conf;
 import org.neociclo.capi20.message.ConnectB3Ind;
+import org.neociclo.capi20.message.ConnectB3Resp;
 import org.neociclo.capi20.message.ConnectConf;
 import org.neociclo.capi20.message.DataB3Conf;
 import org.neociclo.capi20.message.DataB3Ind;
@@ -53,6 +54,7 @@ import org.neociclo.capi20.message.DisconnectB3Conf;
 import org.neociclo.capi20.message.DisconnectB3Ind;
 import org.neociclo.capi20.message.DisconnectConf;
 import org.neociclo.capi20.message.DisconnectInd;
+import org.neociclo.capi20.message.ResetB3Conf;
 import org.neociclo.capi20.message.ResetB3Ind;
 import org.neociclo.capi20.parameter.Flag;
 import org.neociclo.capi20.parameter.Info;
@@ -110,7 +112,10 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     
     @State(PLCI_ACTIVE)
     public static final String WF_CONNECT_B3_ACTIVE_IND = "N-2 [WF_CONNECT_B3_ACTIVE_IND]";
-    
+
+    @State(PLCI_ACTIVE)
+    public static final String WF_RESET_B3_CONF = "N-0.3 [WF_RESET_B3_CONF]";
+
     @State(PLCI_ACTIVE)
     public static final String NCCI_ACTIVE = "N-ACT";
     
@@ -159,19 +164,19 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     }
 
     @Transition(on = MESSAGE_RECEIVED, in = WF_CONNECT_CONF, next = WF_CONNECT_ACTIVE_IND)
-    public void plciConnectConf(IsdnChannel channel, ConnectConf conf) throws CapiException {
+    public void plciConnectConf(IsdnChannel channel, ConnectConf msgConf) throws CapiException {
 
         LOGGER.trace("plciConnectConf()");
 
-        Info response = conf.getInfo();
+        Info response = msgConf.getInfo();
         if (response != Info.REQUEST_ACCEPTED) {
             LOGGER.debug("PLCI connect failed. Connect Confirmation: info = {}.", response);
-            throw new CapiException(conf.getInfo(), "PLCI connect failed.");
+            throw new CapiException(msgConf.getInfo(), "PLCI connect failed.");
         }
 
         // keep the PLCI information on IsdnChannel
         IsdnChannelConfig config = channel.getConfig();
-        config.setPlci(conf.getPlci());
+        config.setPlci(msgConf.getPlci());
 
     }
 
@@ -188,6 +193,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
 
         // reply with CONNECT_ACTIVE_RESP
         CapiMessage activeResp = replyConnectActiveResp(activeInd);
+
         channel.write(activeResp);
 
     }
@@ -286,19 +292,19 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     }
 
     @Transition(on = MESSAGE_RECEIVED, in = WF_CONNECT_B3_CONF, next = WF_CONNECT_B3_ACTIVE_IND)
-    public void ncciConnectB3Conf(IsdnChannel channel, ConnectB3Conf conf) throws CapiException {
+    public void ncciConnectB3Conf(IsdnChannel channel, ConnectB3Conf msgConf) throws CapiException {
 
         LOGGER.trace("ncciConnectB3Conf()");
 
-        Info response = conf.getInfo();
+        Info response = msgConf.getInfo();
         if (response != Info.REQUEST_ACCEPTED) {
             LOGGER.debug("NCCI connect B3 failed. Confirmation: info = {}.", response);
-            throw new CapiException(conf.getInfo(), "NCCI connect B3 failed.");
+            throw new CapiException(msgConf.getInfo(), "NCCI connect B3 failed.");
         }
 
         // store the NCCI information on LogicalChannel
         IsdnChannelConfig config = channel.getConfig();
-        config.setNcci(conf.getNcci());
+        config.setNcci(msgConf.getNcci());
 
     }
 
@@ -312,7 +318,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
         config.setNcci(ind.getNcci());
 
         // send CONNECT_B3_RESP back
-        CapiMessage resp = replyConnectB3Ind(ind, ACCEPT_CALL);
+        ConnectB3Resp resp = replyConnectB3Ind(ind, ACCEPT_CALL);
         channel.write(resp);
 
     }
@@ -483,13 +489,19 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     // Flow control
     // -------------------------------------------------------------------------
 
-    @Transition(on = MESSAGE_RECEIVED, in = NCCI_ACTIVE) //, next = WF_DISCONNECT_B3_CONF)
-    public void ncciResetB3Ind(final IsdnChannel channel, ResetB3Ind resetInd) throws CapiException {
+    @Transition(on = MESSAGE_RECEIVED, in = NCCI_ACTIVE, next = WF_RESET_B3_CONF) //, next = WF_DISCONNECT_B3_CONF)
+    public void ncciResetB3Ind(final IsdnChannel channel, StateContext stateCtx, ResetB3Ind resetInd) throws CapiException {
 
         LOGGER.trace("ncciResetB3Ind()");
 
+        stateCtx.setAttribute(ISDN_RECEIVE_BUF_ATTR, null);
+
         CapiMessage resetResp = createResetB3Resp(channel);
-        ChannelFuture resetRespFuture = channel.write(resetResp);
+//        ChannelFuture resetRespFuture = channel.write(resetResp);
+        channel.write(resetResp);
+
+//        CapiMessage resetReq = createResetB3Req(channel);
+//        channel.write(resetReq);
 
 //        resetRespFuture.addListener(new ChannelFutureListener() {
 //            public void operationComplete(ChannelFuture future) throws Exception {
@@ -499,6 +511,11 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
 //            }
 //        });
 
+    }
+
+    @Transition(on = MESSAGE_RECEIVED, in = WF_RESET_B3_CONF, next = NCCI_ACTIVE)
+    public void ncciResetB3Conf(IsdnChannel channel, ResetB3Conf conf) {
+        LOGGER.trace("ncciResetB3Conf()");
     }
 
     // -------------------------------------------------------------------------
