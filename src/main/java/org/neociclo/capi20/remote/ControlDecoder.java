@@ -22,7 +22,7 @@ package org.neociclo.capi20.remote;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
 import org.neociclo.capi20.remote.message.ControlMessage;
 
@@ -30,7 +30,7 @@ import org.neociclo.capi20.remote.message.ControlMessage;
  * @author Rafael Marins
  * @version $Rev$ $Date$
  */
-@ChannelPipelineCoverage("all")
+@Sharable
 class ControlDecoder extends FrameDecoder {
 
     public ControlDecoder() {
