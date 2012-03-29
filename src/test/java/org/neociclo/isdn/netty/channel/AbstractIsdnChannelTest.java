@@ -204,7 +204,7 @@ public abstract class AbstractIsdnChannelTest {
         mock().waitForSignal(eq(getAppId()));
         expectLastCall().andDelegateTo(new CapiAdapter() {
             @Override
-            public void waitForSignal(int appID) throws CapiException {
+            public boolean waitForSignal(int appID) throws CapiException {
                 // release waitForSignal() method after lock notify
                 if (inChannel.isEmpty()) {
                     LOGGER.trace("Mock.waitForSignal() :: Acquiring lock...");
@@ -218,6 +218,7 @@ public abstract class AbstractIsdnChannelTest {
                     }
                     LOGGER.trace("Mock.waitForSignal() :: Lock released");
                 }
+                return true;
             }
         }).anyTimes();
 

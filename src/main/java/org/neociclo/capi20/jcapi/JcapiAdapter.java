@@ -140,12 +140,17 @@ public class JcapiAdapter implements Capi {
         }
     }
 
-    public void waitForSignal(int appID) throws CapiException {
+    public boolean waitForSignal(int appID) throws CapiException {
         try {
             jcapi.waitForSignal(appID);
         } catch (org.capi.capi20.CapiException e) {
             exception(e);
         }
+        return true;
+    }
+
+    public boolean waitForSignal(int appID, long timeoutMillis) throws CapiException {
+    	return waitForSignal(appID);
     }
 
 }

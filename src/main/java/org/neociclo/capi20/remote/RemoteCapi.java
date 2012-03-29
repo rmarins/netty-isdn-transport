@@ -165,15 +165,23 @@ public class RemoteCapi implements Capi {
 
     }
 
-    public void waitForSignal(int appID) throws CapiException {
-
+    public boolean waitForSignal(int appID) throws CapiException {
         ApplicationController appCtrl = getRegisteredAppId(appID);
-
+        boolean signal = false;
         synchronized (appCtrl.readLock) {
-            appCtrl.waitForSignal();
+            signal = appCtrl.waitForSignal();
         }
-
+        return signal;
     }
+
+	public boolean waitForSignal(int appID, long timeoutMillis) throws CapiException {
+        ApplicationController appCtrl = getRegisteredAppId(appID);
+        boolean signal = false;
+        synchronized (appCtrl.readLock) {
+            signal = appCtrl.waitForSignal(timeoutMillis);
+        }
+        return signal;
+	}
 
     public byte[] getMessage(int appID) throws CapiException {
 

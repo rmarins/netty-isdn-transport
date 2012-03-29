@@ -58,6 +58,12 @@ public class CapiAdapter implements Capi {
 
     public void release(int appID) throws org.neociclo.capi20.CapiException { }
 
-    public void waitForSignal(int appID) throws org.neociclo.capi20.CapiException { }
+    public boolean waitForSignal(int appID) throws org.neociclo.capi20.CapiException {
+    	return false;
+    }
+
+    public boolean waitForSignal(int appID, long timeoutMillis) throws org.neociclo.capi20.CapiException {
+    	return false;
+    }
 
 }

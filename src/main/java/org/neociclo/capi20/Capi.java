@@ -127,9 +127,10 @@ public interface Capi {
      * @param appID
      *            the application identification number assigned by the function
      *            CAPI_REGISTER
+     * @return signal received
      * @throws CapiException
      */
-    public void waitForSignal(int appID) throws CapiException;
+    public boolean waitForSignal(int appID) throws CapiException;
 
     /**
      * This function can be used by an application to determine whether the ISDN
@@ -194,5 +195,10 @@ public interface Capi {
      * @throws CapiException
      */
     public byte[] getProfile(int controller) throws CapiException;
+
+	/**
+	 * @see Capi#waitForSignal(int)
+	 */
+	public boolean waitForSignal(int appID, long timeoutMillis) throws CapiException;
 
 }

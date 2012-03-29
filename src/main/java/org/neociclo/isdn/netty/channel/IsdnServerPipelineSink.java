@@ -25,6 +25,7 @@ import static org.neociclo.capi20.message.MessageType.*;
 import static org.neociclo.capi20.parameter.Info.*;
 import static org.neociclo.capi20.parameter.Reject.*;
 import static org.neociclo.isdn.netty.handler.ParameterHelper.*;
+import static org.neociclo.isdn.netty.channel.MessageBuilder.*;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -37,10 +38,12 @@ import net.sourceforge.jcapi.message.parameter.ConnectedSubAddress;
 import net.sourceforge.jcapi.message.parameter.NCCI;
 import net.sourceforge.jcapi.message.parameter.PLCI;
 
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.AbstractChannelSink;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelState;
 import org.jboss.netty.channel.ChannelStateEvent;
@@ -52,7 +55,6 @@ import org.neociclo.capi20.message.ConnectInd;
 import org.neociclo.capi20.message.CapiMessage;
 import org.neociclo.capi20.message.ConnectResp;
 import org.neociclo.capi20.message.DisconnectReq;
-import org.neociclo.capi20.message.ResetB3Ind;
 import org.neociclo.isdn.IsdnSocketAddress;
 import org.neociclo.capi20.message.MessageType;
 import org.slf4j.Logger;
@@ -264,7 +266,22 @@ final class IsdnServerPipelineSink extends AbstractChannelSink {
                 try {
 
                     // wait for message
-                    channel.capi().waitForSignal(appID);
+                    boolean recsig = channel.capi().waitForSignal(appID, 30000);
+
+                    // wake up procedure: send INFO_REQ when 60secs timeout is
+                    // reached
+                    if (!recsig) {
+                    	logger.trace("No signal received! Channel is bound: {}", channel.isBound());
+                    	CapiMessage wakeUp = createInfoReq(channel);
+                    	IsdnWorker.write(channel, future(channel), wakeUp);
+
+                    	// expects an INFO_CONF message
+                    	if (!channel.capi().waitForSignal(appID, 30000)) {
+                    		throw new CapiException(EXCHANGE_RESOURCE_ERROR,
+                    				"WakeUp didn't worked. ISDN server link seems to be down.");
+                    	}
+                    }
+
                     CapiMessage message = IsdnWorker.getMessage(channel, appID);
 
                     // retrieve physical connection identifier from the message
@@ -312,36 +329,37 @@ final class IsdnServerPipelineSink extends AbstractChannelSink {
                                                 acceptedChannel.getId(),
                                                 acceptedChannel.getCallingAddress(),
                                                 acceptedChannel.getCalledAddress())));
-                        
 
-                    } else {
+					} else if (type == RESET_B3_IND || type == RESET_B3_CONF) {
+						for (PlciConnectionHandler stepPh : plciHandlers.values()) {
+							stepPh.offerReceived(message);
+						}
+					} else if (type == INFO_CONF) {
+						logger.trace("InfoConf received. Connection is alive.");
+					} else {
 
+                        // usual incoming message
+                        PlciConnectionHandler ph = plciHandlers.get(plci);
 
-                        if (type == RESET_B3_IND || type == RESET_B3_CONF) {
-                        	for (PlciConnectionHandler stepPh: plciHandlers.values()) {
-                        		stepPh.offerReceived(message);
-                        	}
+                        if (ph != null ) {
+                            // enqueue the message onto proper PLCI handler
+                            ph.offerReceived(message);
+                        } else if (type == DISCONNECT_CONF) {
+                            // ignore/discard
                         } else {
-	                        // usual incoming message
-	                        PlciConnectionHandler ph = plciHandlers.get(plci);
-	
-	                        if (ph != null ) {
-	                            // enqueue the message onto proper PLCI handler
-	                            ph.offerReceived(message);
-	                        } else if (type == DISCONNECT_CONF) {
-	                            // ignore/discard
-	                        } else {
-	                            // cannot dispatch the received message to proper channel
-	                            // through the PLCI connection handler
-	                            throw new CapiException(EXCHANGE_RESOURCE_ERROR,
-	                            		"Incorrect message. No PLCI connection handler.");
-	                        }
+                            // cannot dispatch the received message to proper channel
+                            // through the PLCI connection handler
+                            throw new CapiException(EXCHANGE_RESOURCE_ERROR,
+                            		"Incorrect message. No PLCI connection handler.");
                         }
 
                     }
 
                 } catch (CapiException e) {
-                    logger.warn("Failed to accept a connection.", e);
+                    logger.warn("ISDN Server interrupted. Binding connection lost.", e);
+                    // close server channel
+                    channel.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+                    break;
                 }
             }
         }

@@ -140,8 +140,12 @@ public class SimpleCapi implements Capi {
         capi.release(appID);
     }
 
-    public void waitForSignal(int appID) throws CapiException {
-        capi.waitForSignal(appID);
+    public boolean waitForSignal(int appID) throws CapiException {
+        return capi.waitForSignal(appID);
+    }
+
+    public boolean waitForSignal(int appID, long timeoutMillis) throws CapiException {
+        return capi.waitForSignal(appID, timeoutMillis);
     }
 
     @Override

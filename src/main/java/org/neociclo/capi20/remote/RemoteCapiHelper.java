@@ -120,7 +120,12 @@ class RemoteCapiHelper {
                 // shut down thread pools on channelClosed
                 connectFuture.getChannel().getCloseFuture().addListener(new ChannelFutureListener() {
                     public void operationComplete(ChannelFuture closeFuture) throws Exception {
-                        bootstrap.releaseExternalResources();
+                    	new Thread() {
+                    		@Override
+                    		public void run() {
+                                bootstrap.releaseExternalResources();
+                    		}
+                    	}.start();
                     }
                 });
             } else {
