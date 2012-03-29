@@ -21,9 +21,9 @@ package org.neociclo.isdn.netty.handler;
 
 import static java.lang.String.*;
 import static org.jboss.netty.channel.Channels.*;
-import static org.neociclo.isdn.netty.handler.IsdnConnectionHelper.*;
 import static org.jboss.netty.buffer.ChannelBuffers.*;
 import static org.neociclo.capi20.parameter.Reject.*;
+import static org.neociclo.isdn.netty.channel.MessageBuilder.*;
 
 import java.nio.charset.Charset;
 
