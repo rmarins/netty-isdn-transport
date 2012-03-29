@@ -41,6 +41,11 @@ public class CapiException extends Exception {
         this.capiError = error;
     }
 
+	public CapiException(Info error, String message, Throwable cause) {
+		super(message, cause);
+		this.capiError = error;
+	}
+
     public Info getCapiError() {
         return capiError;
     }

@@ -27,14 +27,17 @@ import static org.neociclo.capi20.parameter.Info.*;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import net.sourceforge.jcapi.rcapi.message.parameter.UserData;
 
+import org.jboss.netty.channel.ChannelHandler.Sharable;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.neociclo.capi20.CapiException;
@@ -55,7 +58,7 @@ class ApplicationController {
 
     private static final int CONTROL_APP_ID = 0xffff;
 
-    @ChannelPipelineCoverage("all")
+    @Sharable
     public class ApplicationHandler extends SimpleChannelHandler {
 
         private BlockingQueue<ControlMessage> incoming = new ArrayBlockingQueue<ControlMessage>(2);
@@ -82,12 +85,22 @@ class ApplicationController {
             return message;
         }
 
-        public void lockUntilReceive() throws CapiException {
+        public boolean lockUntilReceive() throws CapiException {
             try {
                 received = incoming.take();
             } catch (InterruptedException e) {
-                throw new CapiException(Info.EXCHANGE_RESOURCE_ERROR, "CAPI_WAIT_FOR_SIGNAL failure. Message receive await interrupted.");
+                throw new CapiException(Info.EXCHANGE_RESOURCE_ERROR, "CAPI_WAIT_FOR_SIGNAL failure. Message receive await interrupted.", e);
             }
+            return (received != null);
+        }
+
+        public boolean lockUntilReceive(long timeoutMillis) throws CapiException {
+            try {
+                received = incoming.poll(timeoutMillis, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                throw new CapiException(Info.EXCHANGE_RESOURCE_ERROR, "CAPI_WAIT_FOR_SIGNAL failure. Message receive await interrupted.", e);
+            }
+            return (received != null);
         }
 
         @Override
@@ -96,6 +109,30 @@ class ApplicationController {
             incoming.put(message);
         }
 
+        @Override
+        public void channelUnbound(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        	System.out.println("ApplicationController$ApplicationHandler :: channelUnbound()");
+        	super.channelUnbound(ctx, e);
+        }
+        
+        @Override
+        public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        	System.out.println("ApplicationController$ApplicationHandler :: channelClosed()");
+        	super.channelClosed(ctx, e);
+        }
+
+        @Override
+        public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        	System.out.println("ApplicationController$ApplicationHandler :: channelDisconnected()");
+        	super.channelDisconnected(ctx, e);
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+        	System.out.println("ApplicationController$ApplicationHandler :: exceptionCaught()");
+        	e.getCause().printStackTrace();
+        	super.exceptionCaught(ctx, e);
+        }
     }
 
     private static void checkConnected(Channel channel) throws CapiException {
@@ -205,20 +242,26 @@ class ApplicationController {
     }
 
     public void putMessage(byte[] message) throws CapiException {
-        ChannelBuffer buf = ChannelBuffers.wrappedBuffer(message);
+    	checkConnected(channel);
+
+    	ChannelBuffer buf = ChannelBuffers.wrappedBuffer(message);
         CapiPutMessage req = new CapiPutMessage(buf);
         handler.send(channel, req);
     }
 
-    public void waitForSignal() throws CapiException {
-        handler.lockUntilReceive();
+    public boolean waitForSignal() throws CapiException {
+//    	checkConnected(channel);
+    	return handler.lockUntilReceive();
     }
 
+	public boolean waitForSignal(long timeoutMillis) throws CapiException {
+//    	checkConnected(channel);
+    	return handler.lockUntilReceive(timeoutMillis);
+	}
+
     public byte[] getMessage() throws CapiException {
-
-        ControlMessage message;
-        message = handler.receive();
-
+    	checkConnected(channel);
+        ControlMessage message = handler.receive();
         return message.getOctets();
     }
 
