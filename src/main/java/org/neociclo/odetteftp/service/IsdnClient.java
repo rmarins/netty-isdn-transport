@@ -19,7 +19,6 @@
  */
 package org.neociclo.odetteftp.service;
 
-import java.net.SocketAddress;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -42,8 +41,6 @@ import org.neociclo.odetteftp.util.ExecutorUtil;
  */
 public class IsdnClient extends Client {
 
-	private IsdnSocketAddress calledAddress;
-	private IsdnSocketAddress callingAddress;
 	private CapiFactory capi;
 
 	private IsdnConfigurator isdnConfigurator;
@@ -51,33 +48,18 @@ public class IsdnClient extends Client {
 
 	private Executor workerExecutor;
 
-	public IsdnClient(String calledAddr, String callingAddr, CapiFactory capi, OftpletFactory factory) {
-		this(new IsdnSocketAddress(calledAddr), new IsdnSocketAddress(callingAddr), capi, factory);
-	}
-
-	public IsdnClient(IsdnSocketAddress calledAddr, IsdnSocketAddress callingAddr, CapiFactory capi, OftpletFactory factory) {
+	public IsdnClient(CapiFactory capi, OftpletFactory factory) {
 		super(factory);
-
-		if (calledAddr == null)
-			throw new NullPointerException("calledAddress");
-		else if (callingAddr == null)
-			throw new NullPointerException("callingAddress");
-		else if (capi == null)
+		if (capi == null) {
 			throw new NullPointerException("capi");
+		}
 
-		this.calledAddress = calledAddr;
-		this.callingAddress = callingAddr;
 		this.capi = capi;
 	}
 
-	@Override
-	protected SocketAddress getRemoteAddress() {
-		return getCalledAddress();
-	}
-
-	@Override
-	protected SocketAddress getLocalAddress() {
-		return getCallingAddress();
+	public synchronized void connect(String calledAddress, String callingAddress, boolean await)
+			throws Exception {
+		connect(new IsdnSocketAddress(calledAddress), new IsdnSocketAddress(callingAddress), await);
 	}
 
 	@Override
@@ -89,24 +71,37 @@ public class IsdnClient extends Client {
 	}
 
 	@Override
-	protected ChannelFactory createChannelFactory() {
+	public void setChannelFactory(ChannelFactory channelFactory) {
+		if (!(channelFactory instanceof IsdnClientChannelFactory)) {
+			throw new IllegalArgumentException("Not an instance of IsdnClientChannelFactory");
+		}
+		super.setChannelFactory(channelFactory);
+	}
 
-        if (workerExecutor == null) {
-        	workerExecutor = Executors.newCachedThreadPool();
-            setManaged(workerExecutor);
+	@Override
+	public IsdnClientChannelFactory getChannelFactory() {
+
+		// creates one channel-factory per object instance
+        if (super.getChannelFactory() == null) {
+
+            if (workerExecutor == null) {
+            	workerExecutor = Executors.newCachedThreadPool();
+                setManaged(workerExecutor);
+            }
+
+        	setChannelFactory(new IsdnClientChannelFactory(workerExecutor, getCapi(), getIsdnConfigurator(),
+    		        getControllerSelector()));
         }
 
-		ChannelFactory channelFactory = new IsdnClientChannelFactory(workerExecutor, getCapi(), getIsdnConfigurator(),
-		        getControllerSelector());
-		return channelFactory;
+        return (IsdnClientChannelFactory) super.getChannelFactory();
 	}
 
 	public final IsdnSocketAddress getCalledAddress() {
-		return calledAddress;
+		return (IsdnSocketAddress) getRemoteAddress();
 	}
 
 	public final IsdnSocketAddress getCallingAddress() {
-		return callingAddress;
+		return (IsdnSocketAddress) getLocalAddress();
 	}
 
 	public final CapiFactory getCapi() {
