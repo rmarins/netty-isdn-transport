@@ -35,7 +35,7 @@ public class IsdnExternalConnectionTest extends AbstractIsdnClientExternal {
     @Override
     protected OdetteFtpConfiguration createSessionConfig() {
     	OdetteFtpConfiguration c = new OdetteFtpConfiguration();
-    	c.setVersion(OdetteFtpVersion.OFTP_V14);
+    	c.setVersion(OdetteFtpVersion.OFTP_V12);
         c.setTransferMode(TransferMode.SENDER_ONLY);
 //        c.setHasSpecialLogic(true);
         return c;
@@ -48,7 +48,7 @@ public class IsdnExternalConnectionTest extends AbstractIsdnClientExternal {
             return;
         }
 
-        client.connect();
+        connect(false);
         assertTrue(client.isConnected());
 
         client.awaitDisconnect();

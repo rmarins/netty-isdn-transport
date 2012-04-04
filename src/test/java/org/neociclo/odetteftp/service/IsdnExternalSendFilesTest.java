@@ -55,7 +55,7 @@ public class IsdnExternalSendFilesTest extends AbstractIsdnClientExternal {
             return;
         }
 
-        VirtualFile fileToSend = createVirtualFile(getResourceFile("data/TEST"));
+        VirtualFile fileToSend = createVirtualFile("MY_%d", null, 0, 0, getResourceFile("data/TEST"));
 
         sendFileTest(null, false, false, 256, 64, fileToSend);
     }
@@ -81,7 +81,7 @@ public class IsdnExternalSendFilesTest extends AbstractIsdnClientExternal {
 
         outgoing.offer(fileToSend);
 
-        client.connect(true);
+        connect();
 
         OdetteFtpObject obj = incoming.poll();
         if (obj instanceof DeliveryNotification) {

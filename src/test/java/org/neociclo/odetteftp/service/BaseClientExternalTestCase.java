@@ -205,7 +205,7 @@ public abstract class BaseClientExternalTestCase {
             throw new NullPointerException("pattern");
         }
 
-        String randomNumber = String.valueOf(Math.abs(RANDOM.nextInt()));
+        int randomNumber = Math.abs(RANDOM.nextInt());
         Calendar currentTime = Calendar.getInstance();
 
         return String.format(pattern, randomNumber, currentTime);

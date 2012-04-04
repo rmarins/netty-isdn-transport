@@ -22,6 +22,8 @@ package org.neociclo.odetteftp.service;
 import static org.neociclo.capi20.parameter.B3Protocol.X25_DTE_DTE;
 import static org.neociclo.capi20.parameter.CompatibilityInformationProfile.UNRESTRICTED_DIGITAL;
 import static org.neociclo.odetteftp.util.IsdnConstants.*;
+import static org.neociclo.odetteftp.util.OdetteFtpConstants.DEFAULT_OFTP_PORT;
+import static org.neociclo.odetteftp.util.OdetteFtpConstants.DEFAULT_SECURE_OFTP_PORT;
 
 import net.sourceforge.jcapi.message.parameter.AdditionalInfo;
 import net.sourceforge.jcapi.message.parameter.sub.B3Configuration;
@@ -49,9 +51,6 @@ public abstract class AbstractIsdnClientExternal extends BaseClientExternalTestC
         String rcapiUser = System.getProperty("rcapi.user");
         String rcapiPswd = System.getProperty("rcapi.password");
 
-        String calledAddr = System.getProperty("oftp.isdn.called-addr");
-        String callingAddr = System.getProperty("oftp.isdn.calling-addr");
-
         if (rcapiHost == null || "".equals(rcapiHost.trim())) {
         	throw new IllegalArgumentException("rcapi.server");
         }
@@ -60,7 +59,7 @@ public abstract class AbstractIsdnClientExternal extends BaseClientExternalTestC
         CapiFactory capi = new RemoteCapiFactory(rcapiHost, rcapiPort, rcapiUser, rcapiPswd);
 
         // set up the OFTP Isdn client
-        IsdnClient isdnClient = new IsdnClient(calledAddr, callingAddr, capi, factory);
+        IsdnClient isdnClient = new IsdnClient(capi, factory);
         isdnClient.setIsdnConfigurator(new IsdnConfigurator() {
             public void configureChannel(IsdnChannel channel) {
                 IsdnChannelConfig config = channel.getConfig();
@@ -84,5 +83,18 @@ public abstract class AbstractIsdnClientExternal extends BaseClientExternalTestC
 
         return isdnClient;
 	}
+
+    protected void connect() throws Exception {
+    	connect(true);
+    }
+
+    protected void connect(boolean await) throws Exception {
+
+        String calledAddr = System.getProperty("oftp.isdn.called-addr");
+        String callingAddr = System.getProperty("oftp.isdn.calling-addr");
+
+        ((IsdnClient) client).connect(calledAddr, callingAddr, await);
+    }
+
 
 }
