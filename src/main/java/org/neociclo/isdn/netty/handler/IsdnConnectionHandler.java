@@ -523,7 +523,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
     // -------------------------------------------------------------------------
 
     @Transition(on = EXCEPTION_CAUGHT, in = PLCI, next = PLCI_IDLE)
-    public void error(IsdnChannel channel, StateContext stateCtx, ExceptionEvent event) {
+    public void error(IsdnChannel channel, StateContext stateCtx, ChannelHandlerContext ctx, ExceptionEvent event) {
         LOGGER.error("Unexpected error.", event.getCause());
         if (!channel.isConnected()) {
             // retrieve CHANNEL_CONNECTED event and clear attribute
@@ -531,6 +531,8 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
             stateCtx.setAttribute(ISDN_CONNECTED_EVENT_ATTR, null);
             // set FAILED on connectFuture 
             channelConnected.getFuture().setFailure(new Exception(format("ERROR - %s", event.getCause().getMessage())));
+        } else {
+            ctx.sendUpstream(event);
         }
         close(channel);
     }
