@@ -22,13 +22,13 @@ package org.neociclo.odetteftp.service;
 import static org.neociclo.capi20.parameter.B3Protocol.X25_DTE_DTE;
 import static org.neociclo.capi20.parameter.CompatibilityInformationProfile.UNRESTRICTED_DIGITAL;
 import static org.neociclo.odetteftp.util.IsdnConstants.*;
-import static org.neociclo.odetteftp.util.OdetteFtpConstants.DEFAULT_OFTP_PORT;
-import static org.neociclo.odetteftp.util.OdetteFtpConstants.DEFAULT_SECURE_OFTP_PORT;
 
 import net.sourceforge.jcapi.message.parameter.AdditionalInfo;
 import net.sourceforge.jcapi.message.parameter.sub.B3Configuration;
 import net.sourceforge.jcapi.message.parameter.sub.BChannelInformation;
 
+import org.neociclo.capi20.parameter.B3Protocol;
+import org.neociclo.capi20.parameter.CompatibilityInformationProfile;
 import org.neociclo.isdn.CapiFactory;
 import org.neociclo.isdn.RemoteCapiFactory;
 import org.neociclo.isdn.netty.channel.IsdnChannel;
@@ -64,20 +64,23 @@ public abstract class AbstractIsdnClientExternal extends BaseClientExternalTestC
             public void configureChannel(IsdnChannel channel) {
                 IsdnChannelConfig config = channel.getConfig();
 
-                config.setMaxLogicalConnection(1);
-                config.setMaxBDataBlocks(7);
-                config.setMaxBDataLen(4096);
+				config.setMaxLogicalConnection(1);
+				config.setMaxBDataBlocks(7);
+				config.setMaxBDataLen(4096);
 
-                config.setCompatibilityInformationProfile(UNRESTRICTED_DIGITAL);
-                config.setB3(X25_DTE_DTE);
+				config.setCompatibilityInformationProfile(CompatibilityInformationProfile.SPEECH);
+				config.setB3(B3Protocol.TRANSPARENT);
 
-                B3Configuration b3config = new B3Configuration(X25_DTE_DTE.getBitField());
-                config.setB3Config(b3config);
+				B3Configuration b3config = new B3Configuration(B3Protocol.TRANSPARENT.getBitField());
+//				b3config.setModuloMode(B3Configuration.MODULOMODE_NORMAL);
+//				b3config.setWindowSize(7);
+				config.setB3Config(b3config);
 
-                AdditionalInfo info = new AdditionalInfo();
-                BChannelInformation bChannelInfo = new BChannelInformation();
-                info.setBinfo(bChannelInfo);
-                config.setAdditionalInfo(info);
+				AdditionalInfo info = new AdditionalInfo();
+				BChannelInformation bChannelInfo = new BChannelInformation();
+				info.setBinfo(bChannelInfo);
+				config.setAdditionalInfo(info);
+
             }
         });
 
