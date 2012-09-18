@@ -70,8 +70,13 @@ public class ParameterHelper {
         int x25Group = x25LogicalChannelGroup(lcn);
         int x25Channel = x25Channel(lcn);
 
-        byte[] x25AddressBlock = encodeAddressBlock(channel.getCalledAddress().getAddress(), channel
-                .getCallingAddress().getAddress());
+        byte[] x25AddressBlock = null;
+        if (!isEmpty(config.getX25Nua())) {
+        	x25AddressBlock = encodeAddressBlock(config.getX25Nua(), null);
+        } else {
+			x25AddressBlock = encodeAddressBlock(channel.getCalledAddress().getNumber(), channel.getCallingAddress()
+					.getNumber());
+        }
         byte[] facilities = (config.getFacilities() != null && config.getFacilities().hasFacilities() ? config
                 .getFacilities().encoded() : new byte[] {});
 
@@ -90,12 +95,13 @@ public class ParameterHelper {
     }
 
     public static byte[] encodeAddressBlock(IsdnAddress calledAddress, IsdnAddress callingAddress) {
+    	return encodeAddressBlock(calledAddress.getNumber(), callingAddress.getNumber());
+    }
 
-        String calling = callingAddress.getNumber();
-        String called = calledAddress.getNumber();
+    public static byte[] encodeAddressBlock(String calledAddress, String callingAddress) {
 
-        byte callingAddressLength = (isEmpty(calling) ? 0 : (byte) calling.length());
-        byte calledAddressLength = (isEmpty(called) ? 0 : (byte) called.length());
+        byte callingAddressLength = (isEmpty(callingAddress) ? 0 : (byte) callingAddress.length());
+        byte calledAddressLength = (isEmpty(calledAddress) ? 0 : (byte) calledAddress.length());
 
         byte digits = (byte) (callingAddressLength + calledAddressLength);
         byte totalLength = (byte) (1 + (digits / 2) + (digits % 2));
@@ -108,8 +114,8 @@ public class ParameterHelper {
         encodedAddressesLength = (short) (encodedAddressesLength | (calledAddressLength & 0x0f));
         addressBlock[0] = (byte) encodedAddressesLength;
 
-        encodeAddress(called, calledAddressLength, addressBlock, 1, true);
-        encodeAddress(calling, callingAddressLength, addressBlock, 1 + (calledAddressLength / 2),
+        encodeAddress(calledAddress, calledAddressLength, addressBlock, 1, true);
+        encodeAddress(callingAddress, callingAddressLength, addressBlock, 1 + (calledAddressLength / 2),
                 isEven(calledAddressLength));
 
         return addressBlock;

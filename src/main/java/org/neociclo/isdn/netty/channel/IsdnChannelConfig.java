@@ -78,6 +78,9 @@ public final class IsdnChannelConfig extends DefaultChannelConfig {
     private boolean deliveryConfirmationEnabled;
     private FacilitiesSupport facilities;
 
+    // CONNECT_B3_REQ - X.25 Network User Address
+    private String x25Nua;
+
     /**
      * Creates a new instance.
      */
@@ -233,6 +236,14 @@ public final class IsdnChannelConfig extends DefaultChannelConfig {
     public void setDeliveryConfirmationEnabled(boolean enabled) {
         this.deliveryConfirmationEnabled = enabled;
     }
+
+	public String getX25Nua() {
+		return x25Nua;
+	}
+
+	public void setX25Nua(String x25Nua) {
+		this.x25Nua = x25Nua;
+	}
 
     public FacilitiesSupport getFacilities() {
         return facilities;
