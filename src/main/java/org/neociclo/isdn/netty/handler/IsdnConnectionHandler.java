@@ -167,6 +167,7 @@ public class IsdnConnectionHandler extends SimpleStateMachineHandler {
         Info response = msgConf.getInfo();
         if (response != Info.REQUEST_ACCEPTED) {
             LOGGER.debug("PLCI connect failed. Connect Confirmation: info = {}.", response);
+            close(channel);
             throw new CapiException(msgConf.getInfo(), "PLCI connect failed.");
         }
 

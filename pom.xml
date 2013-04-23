@@ -25,6 +25,7 @@
   </parent>
  -->
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>io.netty</groupId>
   <artifactId>netty-isdn-transport</artifactId>
   <packaging>jar</packaging>

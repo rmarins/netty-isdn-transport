@@ -331,6 +331,11 @@ class IsdnWorker implements Runnable {
                 LOGGER.trace("Capi.waitForSignal() :: released!");
                 
                 message = getMessage();
+                
+                // XXX 23-apr-2013 by @rmarins
+                // perhaps the message could be null if the connection were
+                // not established due to an error in the ISDN link, then 
+                // close(channel) is called at IsdnConnectionHandler(line 170).
 
             } catch (CapiException e) {
 
