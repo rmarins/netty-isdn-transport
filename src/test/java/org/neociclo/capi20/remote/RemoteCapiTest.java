@@ -35,11 +35,22 @@ import org.neociclo.capi20.parameter.Info;
  */
 public class RemoteCapiTest {
 
+	protected boolean runTests;
+
     private RemoteCapi capi;
 
     @Before
     public void setUp() throws Exception {
-        this.capi = new RemoteCapi(new InetSocketAddress("localhost", 2662));
+
+    	runTests = Boolean.parseBoolean(System.getProperty("capi.test", "false"));
+        if (!runTests) {
+            return;
+        }
+
+    	String capiServer = System.getProperty("capi.server", "localhost");
+    	int capiPort = Integer.valueOf(System.getProperty("capi.port", "12662"));
+
+    	this.capi = new RemoteCapi(new InetSocketAddress(capiServer, capiPort));
     }
 
     @After
@@ -49,12 +60,20 @@ public class RemoteCapiTest {
 
     @Test
     public void testGetManufacturer() throws Exception {
+        if (!runTests) {
+            return;
+        }
+
         String manufacturerInfo = capi.getManufacturer(0);
         assertNotNull("No manufacturer info returned.", manufacturerInfo);
     }
 
     @Test
     public void testGetProfile() throws Exception {
+        if (!runTests) {
+            return;
+        }
+
         byte[] profile = capi.getProfile(0);
         assertNotNull("Invalid Capi.getProfile() null response.", profile);
         assertEquals("Invalid Capi.getProfile() response size.", 64, profile.length);
@@ -62,36 +81,59 @@ public class RemoteCapiTest {
 
     @Test
     public void testGetSerialNumber() throws Exception {
+        if (!runTests) {
+            return;
+        }
+
         String serialInfo = capi.getSerialNumber(0);
         assertNotNull("No serial number returned.", serialInfo);
     }
 
     @Test
     public void testGetVersion() throws Exception {
+        if (!runTests) {
+            return;
+        }
+
         int version = capi.getVersion(0);
         assertTrue("Bad version info: " + version, version != 0);
     }
 
     @Test
     public void testIsInstalled() throws Exception {
+        if (!runTests) {
+            return;
+        }
+
         boolean installed = capi.isInstalled();
         assertTrue("Capi not installed.", installed);
     }
 
     @Test
     public void testRegisterOnly() throws Exception {
+        if (!runTests) {
+            return;
+        }
+
         int appID = capi.register(3072, 2, 7, 2048);
         assertEquals("Initial AppID must be equal to ONE.", 1, appID);
     }
 
     @Test
     public void testRegisterAndRelease() throws Exception {
+        if (!runTests) {
+            return;
+        }
+
         int appID = capi.register(3072, 2, 7, 2048);
         capi.release(appID);
     }
 
     @Test
     public void testInfoMessageExchanges() throws Exception {
+        if (!runTests) {
+            return;
+        }
 
         // CAPI_REGISTER
         int appID = capi.register(3072, 2, 7, 2048);
@@ -122,7 +164,4 @@ public class RemoteCapiTest {
                 infoConf.getInfo());
     }
 
-    @Test
-    public void testDoNothing() {
-    }
 }
