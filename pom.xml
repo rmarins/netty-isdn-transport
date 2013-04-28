@@ -87,7 +87,7 @@
   </dependencies>
 
   <properties>
-    <netty.version>3.6.3.Final</netty.version>
+    <netty.version>3.6.5.Final</netty.version>
     <jcapi.version>20090831</jcapi.version>
     <mina-statemachine.version>2.0.7</mina-statemachine.version>
     <junit.version>4.11</junit.version>
