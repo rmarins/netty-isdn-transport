@@ -46,6 +46,8 @@ import org.neociclo.capi20.remote.message.ControlReq;
 import org.neociclo.capi20.remote.message.ControlType;
 import org.neociclo.capi20.remote.message.RegisterConf;
 import org.neociclo.capi20.remote.message.RegisterReq;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Rafael Marins
@@ -53,6 +55,8 @@ import org.neociclo.capi20.remote.message.RegisterReq;
 class ApplicationController {
 
     private static final int CONTROL_APP_ID = 0xffff;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationController.class);
 
     @Sharable
     public class ApplicationHandler extends SimpleChannelHandler {
@@ -70,13 +74,28 @@ class ApplicationController {
         public void send(Channel channel, ControlMessage message) throws CapiException {
             message.setMessageID(msgNum++);
             channel.write(message);
+
+            if (LOGGER.isTraceEnabled()) {
+            	LOGGER.trace("[appId={}, remote={}] send() out with the {}",
+            			new Object[] { format("0x%04X", appID), remoteAddress, message });
+            }
         }
 
         public ControlMessage receive() throws CapiException {
             if (received == null) {
+            	if (LOGGER.isDebugEnabled()) {
+            		LOGGER.debug("[appId={}, remote={}] receive() invoked but #message was null.",
+            				new Object[] { format("0x%04X", appID), remoteAddress });
+            	}
                 throw new CapiException(Info.EXCHANGE_QUEUE_EMPTY, "CAPI_GET_MESSAGE failure. No incoming message in queue.");
             }
+
             ControlMessage message = received;
+            if (LOGGER.isTraceEnabled()) {
+            	LOGGER.trace("[appId={}, remote={}] receive() returned {}",
+            			new Object[] { format("0x%04X", appID), remoteAddress, message });
+            }
+
             received = null;
             return message;
         }
@@ -107,26 +126,28 @@ class ApplicationController {
 
         @Override
         public void channelUnbound(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        	System.out.println("ApplicationController$ApplicationHandler :: channelUnbound()");
+        	LOGGER.trace("[appId={}, remote={}] channelUnbound()", new Object[] { format("0x%04X", appID),
+        			remoteAddress });
         	super.channelUnbound(ctx, e);
         }
         
         @Override
         public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        	System.out.println("ApplicationController$ApplicationHandler :: channelClosed()");
+        	LOGGER.trace("[appId={}, remote={}] channelClosed()", new Object[] { format("0x%04X", appID),
+        			remoteAddress });
         	super.channelClosed(ctx, e);
         }
 
         @Override
         public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        	System.out.println("ApplicationController$ApplicationHandler :: channelDisconnected()");
+        	LOGGER.trace("[appId={}, remote={}] channelDisconnected()", new Object[] { format("0x%04X", appID),
+        			remoteAddress });
         	super.channelDisconnected(ctx, e);
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        	System.out.println("ApplicationController$ApplicationHandler :: exceptionCaught()");
-        	e.getCause().printStackTrace();
+        	LOGGER.error(format("[appId=0x%04X, remote=%s] %s - exceptionCaught()", appID, remoteAddress, channel), e);
         	super.exceptionCaught(ctx, e);
         }
     }
@@ -188,8 +209,8 @@ class ApplicationController {
         RegisterConf conf = (RegisterConf) handler.receive();
 
         if (conf.getInfo() != Info.REQUEST_ACCEPTED) {
-            throw new CapiException(conf.getInfo(), format("CAPI_REGISTER failure. Remote-CAPI reponse: %s", conf
-                    .getInfo()));
+            throw new CapiException(conf.getInfo(), format("[appId=0x%04X, remote=%s] CAPI_REGISTER failure. " +
+            		"Remote-CAPI reponse: %s", appID, remoteAddress, conf.getInfo()));
         }
 
     }
@@ -215,7 +236,8 @@ class ApplicationController {
             }
             authChallenge = readStruct(ChannelBuffers.wrappedBuffer(conf.getResponse()));
         } catch (Throwable t) {
-            throw new CapiException(REGISTER_UNAVAILABLE_RESOURCES_ERROR, "CONTROL -> Unexpected error on get challenge.");
+            throw new CapiException(REGISTER_UNAVAILABLE_RESOURCES_ERROR,
+            		"CONTROL -> Unexpected error on get challenge.", t);
         }
 
         try {
@@ -231,8 +253,8 @@ class ApplicationController {
             handler.lockUntilReceive();
             ControlConf conf = (ControlConf) handler.receive();
         } catch (Throwable t) {
-            t.printStackTrace();
-            throw new CapiException(REGISTER_UNAVAILABLE_RESOURCES_ERROR, "CONTROL -> Remote-CAPI authentication error.");
+            throw new CapiException(REGISTER_UNAVAILABLE_RESOURCES_ERROR,
+            		"CONTROL -> Remote-CAPI authentication error.", t);
         }
         
     }
@@ -275,7 +297,8 @@ class ApplicationController {
 
         if (channel != null && channel.isConnected()) {
             throw new CapiException(Info.REGISTER_UNAVAILABLE_RESOURCES_ERROR, format(
-                    "CAPI_REGISTER failure. Remote-CAPI already registered/connected: %s.", channel));
+                    "[appId=0x%04X, remote=%s] CAPI_REGISTER failure. Remote-CAPI already registered/connected: %s.",
+                    appID, remoteAddress, channel));
         }
 
         handler = new ApplicationHandler();
