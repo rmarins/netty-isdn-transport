@@ -136,11 +136,11 @@ public class RemoteCapiTest {
         }
 
         // CAPI_REGISTER
-        int appID = capi.register(3072, 2, 7, 2048);
+        int appID = capi.register(3072, 1, 7, 2048);
 
         // send INFO_REQ
         InfoReq infoReq = new InfoReq();
-        infoReq.setPlci(new PLCI(1)); // controller 1
+        infoReq.setPlci(new PLCI(0)); // controller 1
         infoReq.setAppID(appID);
         infoReq.setMessageID(1);
         capi.putMessage(appID, infoReq.getRawOctets());
@@ -157,7 +157,7 @@ public class RemoteCapiTest {
         assertEquals("INFO_CONF -> Message Number mismatch.", 1, infoConf.getMessageID());
 
         assertNotNull("INFO_CONF -> Non null PLCI were expected.", infoConf.getPlci());
-        assertEquals("INFO_CONF -> PLCI controller were mismatch.", 1, infoConf.getPlci().getController().getController());
+        assertEquals("INFO_CONF -> PLCI controller were mismatch.", 0, infoConf.getPlci().getController().getController());
 
         assertNotNull("INFO_CONF -> Non null INFO expected.", infoConf.getInfo());
         assertEquals("INFO_CONF ->  Transmission of information initiated were expected.", Info.REQUEST_ACCEPTED,
