@@ -285,7 +285,6 @@ class ApplicationController {
 
     public void release() throws CapiException {
 
-        checkConnected(channel);
         remoteCapiClose(channel);
 
         handler = null;
