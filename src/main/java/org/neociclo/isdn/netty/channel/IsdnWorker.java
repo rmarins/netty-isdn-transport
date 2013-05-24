@@ -209,7 +209,9 @@ class IsdnWorker implements Runnable {
         boolean bound = channel.isBound();
 
         try {
-            channel.worker().release();
+        	if (connected || bound) {
+        		channel.worker().release();
+        	}
             if (channel.setClosed()) {
                 future.setSuccess();
                 if (connected) {
