@@ -20,6 +20,8 @@ import static net.sourceforge.jcapi.message.parameter.IPartyNumberConstants.*;
 import static org.neociclo.capi20.parameter.CompatibilityInformationProfile.*;
 import static org.neociclo.capi20.parameter.SubAddressType.*;
 
+import org.apache.commons.lang.ArrayUtils;
+
 import net.sourceforge.jcapi.message.parameter.AdditionalInfo;
 import net.sourceforge.jcapi.message.parameter.BProtocol;
 import net.sourceforge.jcapi.message.parameter.BearerCapability;
@@ -75,11 +77,18 @@ public class ParameterHelper {
         }
         byte[] facilities = (config.getFacilities() != null && config.getFacilities().hasFacilities() ? config
                 .getFacilities().encoded() : new byte[] {});
+        
+        //x25 userdata
+        byte[] userdata = new byte[] {};
+        if (! ArrayUtils.isEmpty(config.getX25UserData())) {
+        	userdata=config.getX25UserData();
+        }
 
-        byte[] x25Contents = new byte[x25AddressBlock.length + facilities.length];
+        byte[] x25Contents = new byte[x25AddressBlock.length + facilities.length + userdata.length];
         System.arraycopy(x25AddressBlock, 0, x25Contents, 0, x25AddressBlock.length);
         System.arraycopy(facilities, 0, x25Contents, x25AddressBlock.length, facilities.length);
-
+        System.arraycopy(userdata, 0, x25Contents, x25AddressBlock.length + facilities.length, userdata.length);
+        
         NCPI ncpi = new NCPI(b3Protocol, messageType.intValue());
         ncpi.setDeliveryConfirmationEnabled(x25Dbit);
         ncpi.setX25LogicalChannelGroup(x25Group);

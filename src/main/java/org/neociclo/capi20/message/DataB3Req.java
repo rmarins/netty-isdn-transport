@@ -32,7 +32,7 @@ import org.neociclo.capi20.util.Bits;
  */
 public class DataB3Req extends SendMessage {
 
-    public static final int SIZEOF_DATA_B3_REQ = 0x16;
+    public static final int SIZEOF_DATA_B3_REQ = 0x1E;
 
     private NCCI ncci;
     private int dataLength;
@@ -100,6 +100,7 @@ public class DataB3Req extends SendMessage {
         writeWord(buf, (data == null ? getDataLength() : data.length)); // data length
         writeWord(buf, getDataHandle()); // data handle
         writeWord(buf, getRawFlags());
+        writeQword(buf, 0); // 64 bit data pointer
         buf.writeBytes(data);
     }
 

@@ -232,7 +232,12 @@ public class MessageBuilder {
 	    IsdnChannelConfig config = channel.getConfig();
 	
 	    int b3Protocol = b3Protocol(config.getB3());
-	    NCPI ncpi = createNcpi(channel, b3Protocol, CONNECT_B3_REQ);
+	    NCPI ncpi;
+	    if (config.isDontCreateNCPI()) {
+	    	ncpi=null;
+	    } else {
+	    	ncpi = createNcpi(channel, b3Protocol, CONNECT_B3_REQ);
+	    }
 	
 	    ConnectB3Req req = new ConnectB3Req();
 	    req.setPlci(config.getPlci());

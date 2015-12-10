@@ -20,9 +20,13 @@ import static java.lang.String.*;
 
 import java.util.Arrays;
 
+import org.capi.capi20.CapiMessage;
 import org.neociclo.capi20.Capi;
 import org.neociclo.capi20.CapiException;
 import org.neociclo.capi20.parameter.Info;
+
+import net.sourceforge.jcapi.util.ByteArray;
+import net.sourceforge.jcapi.util.TextTools;
 
 /**
  * @author Rafael Marins
@@ -57,7 +61,17 @@ public class JcapiAdapter implements Capi {
             if (message == null) {
                 throw new CapiException(Info.EXCHANGE_QUEUE_EMPTY, "JCapi returned a null message.");
             }
-            return message.getBytes();
+            byte[] messageData=message.getBytes();
+            
+            if (message.getType() == CapiMessage.DATA_B3_IND) {
+            	byte[] dataB3 = message.getB3Data();
+            	byte[] result = Arrays.copyOf(messageData, messageData.length + dataB3.length);
+            	System.arraycopy(dataB3, 0, result, messageData.length, dataB3.length);
+            	return result;
+            } else {
+            	return messageData;
+            }
+            
         } catch (org.capi.capi20.CapiException e) {
             exception(e);
         }
@@ -111,11 +125,26 @@ public class JcapiAdapter implements Capi {
     }
 
     public void putMessage(int appID, byte[] message) throws CapiException {
-        try {
-            jcapi.putMessage(new net.sourceforge.jcapi.JcapiMessage(message));
-        } catch (org.capi.capi20.CapiException e) {
-            exception(e);
-        }
+		int type = ByteArray.getHighOrderInt(message,4,2);
+		
+		if (type == CapiMessage.DATA_B3_REQ) {
+			int length = ByteArray.getLowOrderInt(message,0,2);
+			byte[] messageWithoutData = Arrays.copyOfRange(message, 0, length);
+			byte[] data = Arrays.copyOfRange(message, length, message.length);
+			try {
+				net.sourceforge.jcapi.JcapiMessage jcapiMessage = new net.sourceforge.jcapi.JcapiMessage(messageWithoutData);
+				jcapiMessage.setB3Data(data);
+	            jcapi.putMessage(jcapiMessage);
+	        } catch (org.capi.capi20.CapiException e) {
+	            exception(e);
+	        }
+		} else {
+			try {
+	            jcapi.putMessage(new net.sourceforge.jcapi.JcapiMessage(message));
+	        } catch (org.capi.capi20.CapiException e) {
+	            exception(e);
+	        }
+		}
     }
 
     public int register(int messageBufferSize, int maxLogicalConnection, int maxBDataBlocks, int maxBDataLen)
@@ -148,5 +177,39 @@ public class JcapiAdapter implements Capi {
     public boolean waitForSignal(int appID, long timeoutMillis) throws CapiException {
     	return waitForSignal(appID);
     }
+    
+    /**
+	*	returns the numerical value of the big endian <CODE>byte[]</CODE>-presentation.
+	*	This means the first byte in the array to be interpreted as  
+	*	<CODE>returnValue&gt;&gt;(8*(numBytes-1))</CODE> and so on.
+	*	@param	source		the array containig the big endian presentation
+	*	@param	srcIndex	the index of the first (most significant) byte 
+	*	@param	count		the number of bytes to be interpreted
+	*	@return				the integer value
+	*/
+	
+	public static int getHighOrderInt(byte[] source, int srcIndex, int count) {
+		int val=0;
+		for (count+=srcIndex;srcIndex<count;srcIndex++)
+			val = (val<<8) | (255 & source[srcIndex]);
+		return val;
+	}
+	
+	/**
+	*	returns the numerical value of the little endian <CODE>byte[]</CODE>-presentation.
+	*	This means the first byte in the array to be interpreted as the bits 2^0 to 2^7 of 
+	*	the return value and so on.
+	*	@param	source		the array containig the little endian presentation
+	*	@param	srcIndex	the index of the first (least significant) byte 
+	*	@param	count		the number of bytes to be interpreted
+	*	@return				the integer value
+	*/
+	
+	public static int getLowOrderInt(byte[] source, int srcIndex, int count) {
+		int val=0;
+		for (count+=srcIndex;srcIndex<count;)
+			val = (val<<8) | (255 & source[--count]);
+		return val;
+	}
 
 }

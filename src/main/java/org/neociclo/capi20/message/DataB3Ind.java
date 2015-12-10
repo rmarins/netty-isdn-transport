@@ -110,7 +110,7 @@ public class DataB3Ind extends ReceiveMessage {
         setDataLength(readWord(buf));
         setDataHandle(readWord(buf));
         setRawFlags(readWord(buf));
-//        buf.skipBytes(QWORD_SIZE); // TODO skip 64-bits data pointer ???
+        buf.skipBytes(QWORD_SIZE); // skip 64-bits data pointer
 
         byte[] data = new byte[dataLength];
         buf.readBytes(data);

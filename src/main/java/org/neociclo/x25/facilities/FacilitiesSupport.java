@@ -33,7 +33,7 @@ public class FacilitiesSupport {
         FacilitiesSupport facilities = new FacilitiesSupport();
 
         // prepare regressive counter based on facilities length field
-        byte count = (byte) (buf.get() - 1);
+        byte count = (byte) (buf.get());
 
         while (count > 0) {
             byte encodedType = buf.get();
@@ -94,15 +94,15 @@ public class FacilitiesSupport {
 
     public byte[] encoded() {
 
-        byte[] block = new byte[getBlockSize() + 1];
-        block[0] = (byte) block.length;
+        byte[] block = new byte[getBlockSize()+1];
+        block[0] = (byte) (block.length-1) ;
 
         byte counter = 0;
         Collection<Facility> col = facilities.values();
         for (Facility f : col) {
             byte[] fencode = f.encoded();
             System.arraycopy(fencode, 0, block, counter + 1, fencode.length);
-            counter++;
+            counter=(byte) (counter+((byte)fencode.length)); //Move fencode.length bytes
         }
 
         return block;
