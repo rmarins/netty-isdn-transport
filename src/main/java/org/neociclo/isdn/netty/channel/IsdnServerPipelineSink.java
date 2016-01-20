@@ -146,7 +146,7 @@ final class IsdnServerPipelineSink extends AbstractChannelSink {
     }
 
     private void close(IsdnServerChannel channel, ChannelFuture future) {
-        logger.warn("CLOSE not implemented!!!");
+    	channel.bound = false;
     }
 
     private void bind(IsdnServerChannel channel, ChannelFuture future, IsdnSocketAddress localAddress) {
