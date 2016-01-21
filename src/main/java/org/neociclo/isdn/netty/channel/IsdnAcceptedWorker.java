@@ -86,8 +86,12 @@ class IsdnAcceptedWorker implements Runnable {
             if (message != null) {
                 fireMessageReceived(channel, message);
             } else {
-                logger.warn("Shouldn't receive NULL on PlciConnectionHandler.getMessage() since " +
+            	// setting the workerThread to null will prevent any channel
+                // operations from interrupting this thread from now on.
+                workerThread = null;
+                logger.trace("Shouldn't receive NULL on PlciConnectionHandler.getMessage() since " +
                 		"PlciConnectionHandler.waitForSignal() was released.");
+                break;
             }
 
         }
@@ -95,13 +99,11 @@ class IsdnAcceptedWorker implements Runnable {
         // setting the workerThread to null will prevent any channel
         // operations from interrupting this thread from now on.
         workerThread = null;
-
+        
         // clean up
-        ChannelFuture closeFuture = channel.getCloseFuture();
-        if (!closeFuture.isDone()) {
-            logger.trace("Clean up");
-            close(channel, succeededFuture(channel));
-        }
+        channel.close();
+        close(channel, succeededFuture(channel));
+        channel=null;
 
     }
 
@@ -161,9 +163,6 @@ class IsdnAcceptedWorker implements Runnable {
             future.setFailure(t);
             fireExceptionCaught(channel, t);
         }
-
-        
-        
     }
 
     private static void setMessageAppIdAndNumber(CapiMessage a, int appID, int number) {
