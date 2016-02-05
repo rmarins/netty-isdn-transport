@@ -18,6 +18,7 @@ package org.neociclo.isdn.netty.channel;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.neociclo.capi20.CapiException;
 import org.neociclo.capi20.message.CapiMessage;
@@ -32,6 +33,8 @@ final class PlciConnectionHandler {
     private BlockingQueue<CapiMessage> messageQueue = new LinkedBlockingQueue<CapiMessage>(7);
     private CapiMessage received;
     private Integer plci;
+    
+    private static final long TIMEOUT_SECONDS = 90;
 
     public PlciConnectionHandler(Integer plci) {
         this.plci = plci;
@@ -43,7 +46,7 @@ final class PlciConnectionHandler {
 
     public void waitForSignal() throws CapiException {
         try {
-            received = messageQueue.take();
+            received = messageQueue.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             throw new CapiException(Info.EXCHANGE_RESOURCE_ERROR, "interrupted blocking queue take()");
         }

@@ -76,6 +76,11 @@ public final class IsdnChannelConfig extends DefaultChannelConfig {
 
     // CONNECT_B3_REQ - X.25 Network User Address
     private String x25Nua;
+    //User data for ncpi
+    private byte[] x25UserData;
+    
+    //Sometimes you dont want to create a specific NCPI on connect_b3_req cause some external clients cant handle ok
+    private boolean dontCreateNCPI;
 
     /**
      * Creates a new instance.
@@ -267,5 +272,21 @@ public final class IsdnChannelConfig extends DefaultChannelConfig {
     public ChannelPipelineFactory getPipelineFactory() {
         return pipelineFactory;
     }
+
+	public boolean isDontCreateNCPI() {
+		return dontCreateNCPI;
+	}
+
+	public void setDontCreateNCPI(boolean dontCreateNCPI) {
+		this.dontCreateNCPI = dontCreateNCPI;
+	}
+
+	public byte[] getX25UserData() {
+		return x25UserData;
+	}
+	
+	public void setX25UserData(byte[] userdata) {
+		this.x25UserData=userdata;
+	}
 
 }
